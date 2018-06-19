@@ -14,7 +14,7 @@ bugreport 的内容非常多, 看起来很痛苦, 因此我们希望有这样一
 
 ```
 $ sudo chmod a+x hippo.py
-$ ln -s /home/mi/bin/hippo <仓库路径>/hippo.py
+$ ln -s <仓库路径>/hippo.py /home/mi/bin/hippo
 ```
 
 第三步, 开始使用, 通过 -h 查看说明
@@ -37,7 +37,7 @@ optional arguments:
 ### 查看 system log
 
 ```
-$ hippo bugreport_1526359678499.log -p 1024
+$ hippo bugreport_1526359678499.log -p 1581 | grep input
 ```
 
 该命令会将 bugreport 中进程号为 1024 的 system log 输出到终端. 
