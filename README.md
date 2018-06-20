@@ -21,33 +21,56 @@ $ ln -s <仓库路径>/hippo.py /home/mi/bin/hippo
 
 ```
 $ hippo -h
-usage: parse_bugreport.py [-h] [-p PID] [-e] file
+usage: hippo [-h] [-f FILE] [-p PID] [-l] ...
 
 positional arguments:
-  file               指定文件作为数据源
+  categories            需要显示的内容
 
 optional arguments:
-  -h, --help         show this help message and exit
-  -p PID, --pid PID  进程 pid
-  -e, --events       解析 events log
+  -h, --help            show this help message and exit
+  -f FILE, --file FILE  指定文件作为数据源
+  -p PID, --pid PID     进程 pid
+  -l, --list-categories
+                        list the available categories and exit
 ```
 
 ## 使用举例
 
+hippo 的使用方法类似 systrace, 可以通过 -l 查看所有支持的 categories, 然后选择感兴趣的部分输出.
+
+### 查看支持的 categories
+
+```
+$ hippo -l
+log          - system log
+events       - events log
+kernel       - kernel log
+cpu          - dumpsys cpuinfo
+pss          - total pss
+meminfo      - proc/meminfo
+pagetypeinfo - proc/pagetypeinfo
+```
+
 ### 查看 system log
 
 ```
-$ hippo bugreport_1526359678499.log -p 1581 | grep input
+$ hippo -f bugreport_1526359678499.log log -p 1581 | grep input
 ```
 
-该命令会将 bugreport 中进程号为 1024 的 system log 输出到终端. 
+该命令会将 bugreport 中进程号为 1581 的 system log 输出到终端. 
 
 您还可以通过 grep 命令进行二次过滤.
 
 ### 查看 events log
 
 ```
-$ hippo bugreport_1526359678499.log -e
+$ hippo -f bugreport_1526359678499.log events
 ```
 
 该命令会将 bugreport 中 events log 输出到终端.
+
+### 查看 meminfo 和 pagetypeinfo
+
+```
+$ hippo -f bugreport_1526359678499.log meminfo pagetypeinfo
+```

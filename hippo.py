@@ -70,8 +70,18 @@ def print_green(string):
 def print_yellow(string):
     print(colors.BLUE + string + colors.ENDC)
 
-def get_ps():
-    pass
+def print_log_d(log_d):
+    print('%s %s %s\t%s %s: %s %s' % (log_d['time'], log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message'], log_d['message2']))
+
+def print_log_d_list(log_d_list):
+    for log_d in log_d_list:
+        print_log_d(log_d)
+
+def print_lines(lines):
+    for line in lines:
+        print(line.rstrip())
+
+# --------
 
 def get_system_log(file):
     with open(file) as f:
@@ -113,26 +123,85 @@ def get_events_log(file):
     for log in logs:
         result = RE_LOGCAT.search(log)
         if not result:
-            print('无法解析')
             print(log)
             continue
         log_d = result.groupdict()
         log_d_list.append(log_d)
     return log_d_list
 
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('file', help='指定文件作为数据源')
-    parser.add_argument('-p', '--pid', type=int, help='进程 pid')
-    parser.add_argument('-e', '--events', action="store_true", help='解析 events log')
-    return parser.parse_args()
+def get_proc_meminfo(file):
+    with open(file) as f:
+        lines = f.readlines()
+    
+    for i in range(len(lines)):
+        if 'MEMORY INFO (/proc/meminfo)' in lines[i]:
+            index_start = i
+        if "was the duration of 'MEMORY INFO'" in lines[i]:
+            index_end = i
 
-def print_log_d(log_d):
-    print('%s %s %s\t%s %s: %s %s' % (log_d['time'], log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message'], log_d['message2']))
+    out_list = lines[index_start:index_end]
+    return out_list
 
-def print_log_d_list(log_d_list):
-    for log_d in log_d_list:
-        print_log_d(log_d)
+def get_proc_pagetypeinfo(file):
+    with open(file) as f:
+        lines = f.readlines()
+    
+    for i in range(len(lines)):
+        if 'PAGETYPEINFO (/proc/pagetypeinfo)' in lines[i]:
+            index_start = i
+        if "was the duration of 'PAGETYPEINFO'" in lines[i]:
+            index_end = i
+
+    out_list = lines[index_start:index_end]
+    return out_list
+
+def get_total_pss(file):
+    with open(file) as f:
+        lines = f.readlines()
+    
+    for i in range(len(lines)):
+        if 'Total PSS by process' in lines[i]:
+            index_start = i
+        if "was the duration of 'DUMPSYS MEMINFO'" in lines[i]:
+            index_end = i
+
+    out_list = lines[index_start:index_end]
+    return out_list
+
+def get_cpu_info(file):
+    with open(file) as f:
+        lines = f.readlines()
+    
+    for i in range(len(lines)):
+        if 'DUMPSYS CPUINFO (/system/bin/dumpsys -t 10 cpuinfo -a)' in lines[i]:
+            first_index = i
+        if "was the duration of 'DUMPSYS CPUINFO'" in lines[i]:
+            last_index = i
+
+    out_list = lines[first_index:last_index]
+    return out_list
+
+def get_dmesg(file):
+    with open(file) as f:
+        lines = f.readlines()
+    
+    for i in range(len(lines)):
+        if '------ KERNEL LOG (dmesg) ------' in lines[i]:
+            first_index = i
+        if "was the duration of 'KERNEL LOG (dmesg)'" in lines[i]:
+            last_index = i
+
+    print(first_index)
+    print(last_index)
+
+    out_list = lines[first_index:last_index]
+    return out_list
+
+def get_uptime(file):
+    pass
+
+def get_ps():
+    pass
 
 def filter_log_d_with_pid(log_d_list, pid: int):
     filter_list = []
@@ -141,19 +210,60 @@ def filter_log_d_with_pid(log_d_list, pid: int):
             filter_list.append(log_d)
     return filter_list
 
+def show_categories():
+    print('log          - system log')
+    print('events       - events log')
+    print('kernel       - kernel log')
+    print('cpu          - dumpsys cpuinfo')
+    print('pss          - total pss')
+    print('meminfo      - proc/meminfo')
+    print('pagetypeinfo - proc/pagetypeinfo')
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('categories', nargs=argparse.REMAINDER, help='需要显示的内容')
+    parser.add_argument('-f', '--file', help='指定文件作为数据源', dest='file')
+    parser.add_argument('-p', '--pid', type=int, help='进程 pid')
+    parser.add_argument('-l', '--list-categories', action='store_true', help='list the available categories and exit', dest='list')
+    return parser.parse_args()
 
 def main():
     args = parse_arguments()
 
-    if args.events:
-        log_d_list = get_events_log(args.file)
-    else:
+    if args.list:
+        show_categories()
+        return
+    
+    if not args.file:
+        print('请使用 -f 指定 bugreport, 或使用 -h 查看使用说明')
+        return
+
+    if not args.categories or 'log' in args.categories:
         log_d_list = get_system_log(args.file)
+        if args.pid:
+            log_d_list = filter_log_d_with_pid(log_d_list, args.pid)
+        print_log_d_list(log_d_list)
 
-    if args.pid:
-        log_d_list = filter_log_d_with_pid(log_d_list, args.pid)
+    if 'events' in args.categories:
+        log_d_list = get_events_log(args.file)
+        if args.pid:
+            log_d_list = filter_log_d_with_pid(log_d_list, args.pid)
+        print_log_d_list(log_d_list)
+    
+    if 'pss' in args.categories:
+        print_lines(get_total_pss(args.file))
+    
+    if 'meminfo' in args.categories:
+        print_lines(get_proc_meminfo(args.file))
 
-    print_log_d_list(log_d_list)
+    if 'pagetypeinfo' in args.categories:
+        print_lines(get_proc_pagetypeinfo(args.file))
+    
+    if 'cpu' in args.categories:
+        print_lines(get_cpu_info(args.file))
 
-        
-main()
+    if 'kernel' in args.categories:
+        print_lines(get_dmesg(args.file))
+
+if __name__ == '__main__':
+    main()
