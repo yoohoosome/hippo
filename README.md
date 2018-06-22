@@ -21,7 +21,8 @@ $ ln -s <仓库路径>/hippo.py /home/mi/bin/hippo
 
 ```
 $ hippo -h
-usage: hippo [-h] [-f FILE] [-p PID] [-l] ...
+usage: hippo [-h] [-f FILE] [-p PID] [-t TID] [-l]
+             [categories [categories ...]]
 
 positional arguments:
   categories            需要显示的内容
@@ -29,7 +30,8 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -f FILE, --file FILE  指定文件作为数据源
-  -p PID, --pid PID     进程 pid
+  -p PID, --pid PID     指定进程 pid
+  -t TID, --tid TID     指定线程 tid
   -l, --list-categories
                         list the available categories and exit
 ```
@@ -42,13 +44,16 @@ hippo 的使用方法类似 systrace, 可以通过 -l 查看所有支持的 cate
 
 ```
 $ hippo -l
-log          - system log
-events       - events log
-kernel       - kernel log
-cpu          - dumpsys cpuinfo
-pss          - total pss
-meminfo      - proc/meminfo
-pagetypeinfo - proc/pagetypeinfo
+         log - system log
+      events - events log
+      kernel - dmesg
+      uptime - uptime
+         cpu - dumpsys cpuinfo
+         top - top
+          ps - ps
+         pss - total pss
+     meminfo - cat /proc/meminfo
+pagetypeinfo - cat /proc/pagetypeinfo
 ```
 
 ### 查看 system log
@@ -64,10 +69,10 @@ $ hippo -f bugreport_1526359678499.log log -p 1581 | grep input
 ### 查看 events log
 
 ```
-$ hippo -f bugreport_1526359678499.log events
+$ hippo -f bugreport_1526359678499.log events -t 17699
 ```
 
-该命令会将 bugreport 中 events log 输出到终端.
+该命令会将 bugreport 中线程号 17399的 events log 输出到终端.
 
 ### 查看 meminfo 和 pagetypeinfo
 

@@ -71,7 +71,10 @@ def print_yellow(string):
     print(colors.BLUE + string + colors.ENDC)
 
 def print_log_d(log_d):
-    print('%s %s %s\t%s %s: %s %s' % (log_d['time'], log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message'], log_d['message2']))
+    if log_d['message2']:
+        print('%s %s %s\t%s %s: %s %s' % (log_d['time'], log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message'], log_d['message2']))
+    else:
+        print('%s %s %s\t%s %s: %s' % (log_d['time'], log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message']))
 
 def print_log_d_list(log_d_list):
     for log_d in log_d_list:
@@ -99,7 +102,6 @@ def get_system_log(file):
     for log in logs:
         result = RE_LOGCAT.search(log)
         if not result:
-            print('无法解析')
             print(log)
             continue
         log_d = result.groupdict()
@@ -191,17 +193,46 @@ def get_dmesg(file):
         if "was the duration of 'KERNEL LOG (dmesg)'" in lines[i]:
             last_index = i
 
-    print(first_index)
-    print(last_index)
-
     out_list = lines[first_index:last_index]
     return out_list
 
 def get_uptime(file):
-    pass
+    with open(file) as f:
+        lines = f.readlines()
+    
+    uptime_list =[]
+    for i in range(len(lines)):
+        if '------ UPTIME (uptime) ------' in lines[i]:
+            uptime_list.append(lines[i + 1])
 
-def get_ps():
-    pass
+    #  10:56:03 up 18:41,  0 users,  load average: 5.51, 9.09, 9.09
+    return uptime_list[0]
+
+def get_ps(file):
+    with open(file) as f:
+        lines = f.readlines()
+    
+    for i in range(len(lines)):
+        if '------ PROCESSES AND THREADS (ps -A -T -Z -O pri,nice,rtprio,sched,pcy) ------' in lines[i]:
+            index_start = i
+        if "was the duration of 'PROCESSES AND THREADS'" in lines[i]:
+            index_end = i
+
+    out_list = lines[index_start:index_end]
+    return out_list
+
+def get_top(file):
+    with open(file) as f:
+        lines = f.readlines()
+    
+    for i in range(len(lines)):
+        if '------ CPU INFO (top -b -n 1 -H -s 6 -o pid,tid,user,pr,ni,%cpu,s,virt,res,pcy,cmd,name) ------' in lines[i]:
+            index_start = i
+        if "was the duration of 'CPU INFO'" in lines[i]:
+            index_end = i
+
+    out_list = lines[index_start:index_end]
+    return out_list
 
 def filter_log_d_with_pid(log_d_list, pid: int):
     filter_list = []
@@ -210,21 +241,33 @@ def filter_log_d_with_pid(log_d_list, pid: int):
             filter_list.append(log_d)
     return filter_list
 
+def filter_log_d_with_tid(log_d_list, pid: int):
+    filter_list = []
+    for log_d in log_d_list:
+        if int(log_d['tid']) == pid:
+            filter_list.append(log_d)
+    return filter_list
+
 def show_categories():
-    print('log          - system log')
-    print('events       - events log')
-    print('kernel       - kernel log')
-    print('cpu          - dumpsys cpuinfo')
-    print('pss          - total pss')
-    print('meminfo      - proc/meminfo')
-    print('pagetypeinfo - proc/pagetypeinfo')
+    print('您可以使用下面的内容分类:')
+    print('         log - system log')
+    print('      events - events log')
+    print('      kernel - dmesg')
+    print('      uptime - uptime')
+    print('         cpu - dumpsys cpuinfo')
+    print('         top - top')
+    print('          ps - ps')
+    print('         pss - total pss')
+    print('     meminfo - cat /proc/meminfo')
+    print('pagetypeinfo - cat /proc/pagetypeinfo')
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('categories', nargs=argparse.REMAINDER, help='需要显示的内容')
+    parser.add_argument('categories', nargs='*', help='需要显示的内容分类')
     parser.add_argument('-f', '--file', help='指定文件作为数据源', dest='file')
-    parser.add_argument('-p', '--pid', type=int, help='进程 pid')
-    parser.add_argument('-l', '--list-categories', action='store_true', help='list the available categories and exit', dest='list')
+    parser.add_argument('-p', '--pid', type=int, help='指定进程 pid')
+    parser.add_argument('-t', '--tid', type=int, help='指定线程 tid')
+    parser.add_argument('-l', '--list-categories', action='store_true', help='显示可用的内容分类', dest='list')
     return parser.parse_args()
 
 def main():
@@ -242,12 +285,16 @@ def main():
         log_d_list = get_system_log(args.file)
         if args.pid:
             log_d_list = filter_log_d_with_pid(log_d_list, args.pid)
+        if args.tid:
+            log_d_list = filter_log_d_with_tid(log_d_list, args.tid)
         print_log_d_list(log_d_list)
 
     if 'events' in args.categories:
         log_d_list = get_events_log(args.file)
         if args.pid:
             log_d_list = filter_log_d_with_pid(log_d_list, args.pid)
+        if args.tid:
+            log_d_list = filter_log_d_with_tid(log_d_list, args.tid)
         print_log_d_list(log_d_list)
     
     if 'pss' in args.categories:
@@ -264,6 +311,15 @@ def main():
 
     if 'kernel' in args.categories:
         print_lines(get_dmesg(args.file))
+
+    if 'uptime' in args.categories:
+        print_lines([get_uptime(args.file)])
+
+    if 'ps' in args.categories:
+        print_lines(get_ps(args.file))
+
+    if 'top' in args.categories:
+        print_lines(get_top(args.file))
 
 if __name__ == '__main__':
     main()
