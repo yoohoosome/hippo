@@ -4,6 +4,7 @@ import json
 import argparse
 import sys
 import re
+from datetime import datetime, time, timedelta
 
 
 #Set Color Class  
@@ -46,7 +47,7 @@ uid 可能是字符串
 'message2': None}
 '''
 
-RE_LOGCAT = re.compile(r'(?P<time>\d\d-\d\d \d\d:\d\d:\d\d.\d\d\d)'
+RE_LOGCAT = re.compile(r'(?P<month>\d\d)-(?P<day>\d\d) (?P<hour>\d\d):(?P<minute>\d\d):(?P<second>\d\d).(?P<millisecond>\d\d\d)'
                            r' *(?P<uid>\w+) *(?P<pid>\d+) *(?P<tid>\d+) *(?P<priority>.)'
                            r' (((?P<tag>.*?) *:($| (?P<message>.*)))|(?P<message2>.*))')
 
@@ -57,6 +58,8 @@ PRIORITY_MAPPER = {
         'W': 'warn',
         'E': 'error',
     }
+
+VERSION = '0.1'
 
 def priority_char_to_string(char: str):
     if char in PRIORITY_MAPPER:
@@ -72,9 +75,14 @@ def print_yellow(string):
 
 def print_log_d(log_d):
     if log_d['message2']:
-        print('%s %s %s\t%s %s: %s %s' % (log_d['time'], log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message'], log_d['message2']))
+        print('%s-%s %s:%s:%s.%s %s %s\t%s %s: %s %s' % (log_d['month'], log_d['day'],
+            log_d['hour'], log_d['minute'], log_d['second'], log_d['millisecond'],
+            log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message'],
+            log_d['message2']))
     else:
-        print('%s %s %s\t%s %s: %s' % (log_d['time'], log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message']))
+        print('%s-%s %s:%s:%s.%s %s %s\t%s %s: %s' % (log_d['month'], log_d['day'],
+            log_d['hour'], log_d['minute'], log_d['second'], log_d['millisecond'],
+            log_d['pid'], log_d['tid'], log_d['priority'], log_d['tag'], log_d['message']))
 
 def print_log_d_list(log_d_list):
     for log_d in log_d_list:
@@ -91,7 +99,7 @@ def get_system_log(file):
         lines = f.readlines()
     
     for i in range(len(lines)):
-        if 'SYSTEM LOG (logcat -v threadtime -v printable -v uid -d *:v)' in lines[i]:
+        if 'SYSTEM LOG (logcat' in lines[i]:
             index_start = i + 2
         if "was the duration of 'SYSTEM LOG'" in lines[i]:
             index_end = i
@@ -102,7 +110,7 @@ def get_system_log(file):
     for log in logs:
         result = RE_LOGCAT.search(log)
         if not result:
-            print(log)
+            # print(log)
             continue
         log_d = result.groupdict()
         log_d_list.append(log_d)
@@ -125,7 +133,7 @@ def get_events_log(file):
     for log in logs:
         result = RE_LOGCAT.search(log)
         if not result:
-            print(log)
+            # print(log)
             continue
         log_d = result.groupdict()
         log_d_list.append(log_d)
@@ -205,6 +213,9 @@ def get_uptime(file):
         if '------ UPTIME (uptime) ------' in lines[i]:
             uptime_list.append(lines[i + 1])
 
+    if not uptime_list:
+        return 'Failed to get uptime'
+
     #  10:56:03 up 18:41,  0 users,  load average: 5.51, 9.09, 9.09
     return uptime_list[0]
 
@@ -213,7 +224,7 @@ def get_ps(file):
         lines = f.readlines()
     
     for i in range(len(lines)):
-        if '------ PROCESSES AND THREADS (ps -A -T -Z -O pri,nice,rtprio,sched,pcy) ------' in lines[i]:
+        if '------ PROCESSES AND THREADS (ps' in lines[i]:
             index_start = i
         if "was the duration of 'PROCESSES AND THREADS'" in lines[i]:
             index_end = i
@@ -226,7 +237,7 @@ def get_top(file):
         lines = f.readlines()
     
     for i in range(len(lines)):
-        if '------ CPU INFO (top -b -n 1 -H -s 6 -o pid,tid,user,pr,ni,%cpu,s,virt,res,pcy,cmd,name) ------' in lines[i]:
+        if '------ CPU INFO (top' in lines[i]:
             index_start = i
         if "was the duration of 'CPU INFO'" in lines[i]:
             index_end = i
@@ -241,10 +252,36 @@ def filter_log_d_with_pid(log_d_list, pid: int):
             filter_list.append(log_d)
     return filter_list
 
-def filter_log_d_with_tid(log_d_list, pid: int):
+def filter_log_d_with_tid(log_d_list, tid: int):
     filter_list = []
     for log_d in log_d_list:
-        if int(log_d['tid']) == pid:
+        if int(log_d['tid']) == tid:
+            filter_list.append(log_d)
+    return filter_list
+
+def filter_log_d_in_minutes(log_d_list, minute):
+    filter_list = []
+    if not log_d_list:
+        return filter_list
+
+    last_log_d = log_d_list[-1]
+    last_td = datetime(
+            year=datetime.now().year,
+            month=int(last_log_d['month']),
+            day=int(last_log_d['day']),
+            hour=int(last_log_d['hour']),
+            minute=int(last_log_d['minute']),
+            second=int(last_log_d['second']))
+    start_td = last_td - timedelta(minutes=minute)
+    for log_d in log_d_list:
+        timestamp = datetime(
+            year=datetime.now().year,
+            month=int(log_d['month']),
+            day=int(log_d['day']),
+            hour=int(log_d['hour']),
+            minute=int(log_d['minute']),
+            second=int(log_d['second']))
+        if timestamp > start_td:
             filter_list.append(log_d)
     return filter_list
 
@@ -261,17 +298,26 @@ def show_categories():
     print('     meminfo - cat /proc/meminfo')
     print('pagetypeinfo - cat /proc/pagetypeinfo')
 
+def print_version():
+    print('Version: ' + VERSION)
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('categories', nargs='*', help='需要显示的内容分类')
     parser.add_argument('-f', '--file', help='指定文件作为数据源', dest='file')
-    parser.add_argument('-p', '--pid', type=int, help='指定进程 pid')
-    parser.add_argument('-t', '--tid', type=int, help='指定线程 tid')
+    parser.add_argument('-p', '--pid', type=int, help='指定进程 PID')
+    parser.add_argument('-t', '--tid', type=int, help='指定线程 TID')
+    parser.add_argument('-m', '--minute', type=int, help='只显示最近 MINUTE 分钟的日志')
     parser.add_argument('-l', '--list-categories', action='store_true', help='显示可用的内容分类', dest='list')
+    parser.add_argument('-v', '--version', action='store_true', help='显示版本')
     return parser.parse_args()
 
 def main():
     args = parse_arguments()
+
+    if args.version:
+        print_version()
+        return
 
     if args.list:
         show_categories()
@@ -283,6 +329,8 @@ def main():
 
     if not args.categories or 'log' in args.categories:
         log_d_list = get_system_log(args.file)
+        if args.minute:
+            log_d_list = filter_log_d_in_minutes(log_d_list, args.minute)
         if args.pid:
             log_d_list = filter_log_d_with_pid(log_d_list, args.pid)
         if args.tid:
@@ -291,6 +339,8 @@ def main():
 
     if 'events' in args.categories:
         log_d_list = get_events_log(args.file)
+        if args.minute:
+            log_d_list = filter_log_d_in_minutes(log_d_list, args.minute)
         if args.pid:
             log_d_list = filter_log_d_with_pid(log_d_list, args.pid)
         if args.tid:
