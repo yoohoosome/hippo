@@ -60,6 +60,16 @@ $ hippo -l
 pagetypeinfo - cat /proc/pagetypeinfo
 ```
 
+### 支持 zip 包
+
+两种方式都可以
+
+    hippo -f bugreport_1526359678499.log
+
+或
+
+    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip
+
 ### 查看 system log
 
 ```

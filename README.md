@@ -13,3 +13,5 @@ bugreport 的内容非常多, 看起来很痛苦, 因此我们希望有这样一
 ## Release Note
 
 v0.2: 支持 -m MINUTE, 可以按最近 MINUTE 分钟过滤日志
+
+v0.3: 支持直接查看 zip 包, 比如 'hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip kernel'
