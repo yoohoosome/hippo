@@ -21,7 +21,7 @@ $ ln -s <仓库路径>/hippo.py /home/mi/bin/hippo
 
 ```
 $ hippo -h
-usage: hippo [-h] [-f FILE] [-p PID] [-t TID] [-m MINUTE] [-l] [-v]
+usage: hippo [-h] [-f FILE] [-p PID] [-t TID] [-m MINUTE] [-r RULE] [-l] [-v]
              [categories [categories ...]]
 
 positional arguments:
@@ -34,6 +34,7 @@ optional arguments:
   -t TID, --tid TID     指定线程 TID
   -m MINUTE, --minute MINUTE
                         只显示最近 MINUTE 分钟的日志
+  -r RULE, --rule RULE  使用自定义规则
   -l, --list-categories
                         显示可用的内容分类
   -v, --version         显示版本
@@ -42,9 +43,9 @@ optional arguments:
 
 ## 使用
 
-hippo 的使用方法类似 systrace, 可以通过 `hippo -l` 查看所有支持的 categories, 然后选择感兴趣的部分输出.
+### 查看 bugreport
 
-### 查看支持的 categories
+使用方法类似 systrace, 可以通过 `hippo -l` 查看所有支持的 categories, 然后选择感兴趣的部分输出.
 
 ```
 $ hippo -l
@@ -60,61 +61,7 @@ $ hippo -l
 pagetypeinfo - cat /proc/pagetypeinfo
 ```
 
-### 支持 zip 包
-
-两种方式都可以
-
-    hippo -f bugreport_1526359678499.log
-
-或
-
-    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip
-
-### 查看 system log
-
-```
-$ hippo -f bugreport_1526359678499.log log -p 1575 | grep Slow
-06-12 10:48:04.275 1575 17699	W ActivityManager: Slow operation: 1660ms so far, now at startProcess: returned from zygote!
-06-12 10:48:04.531 1575 17699	W ActivityManager: Slow operation: 1916ms so far, now at startProcess: done updating battery stats
-06-12 10:48:04.534 1575 17699	W ActivityManager: Slow operation: 1920ms so far, now at startProcess: building log message
-06-12 10:48:04.548 1575 17699	W ActivityManager: Slow operation: 1934ms so far, now at startProcess: starting to update pids map
-06-12 10:48:04.548 1575 17699	W ActivityManager: Slow operation: 1934ms so far, now at startProcess: done updating pids map
-06-12 10:48:04.558 1575 17699	W ActivityManager: Slow operation: 1943ms so far, now at startProcess: done starting proc!
-06-12 10:48:15.595 1575 11235	W ActivityManager: Slow operation: 1654ms so far, now at attachApplicationLocked: after mServices.attachApplicationLocked
-```
-
-该命令会将 bugreport 中进程号为 1575 的 system log 输出到终端. 
-
-您还可以通过 grep 命令进行二次过滤.
-
-### 查看 events log
-
-```
-$ hippo -f bugreport_1526359678499.log events -t 1668
-06-12 10:48:41.641 1575 1668	I dvm_lock_sample: [system_server,0,android.ui,7626,ActivityManagerService.java,20286,ActivityStarter.java,815,0]
-06-12 10:48:43.405 1575 1668	I dvm_lock_sample: [system_server,0,android.ui,1001,ActivityManagerService.java,4523,-,1675,0]
-06-12 10:48:53.481 1575 1668	I sysui_action: [317,2]
-06-12 10:48:53.481 1575 1668	I sysui_multi_action: [757,317,758,4,759,2]
-06-12 10:50:22.980 1575 1668	I dvm_lock_sample: [system_server,0,android.ui,724,LocationManagerService.java,351,-,3197,0]
-```
-
-该命令会将 bugreport 中线程号 1668 的 events log 输出到终端.
-
-### 查看进程信息
-
-```
-$ hippo -f bugreport_1528772162307.log top | grep android.ui
- 1575  1668 system       18  -2  0.0 S 2.5G 295M  ta android.ui      system_server
-```
-
-### 查看 uptime
-
-```
-$ hippo -f bugreport_1528772162307.log uptime        
- 10:56:03 up 18:41,  0 users,  load average: 5.51, 9.09, 9.09
-```
-
-### 查看 meminfo
+比如查看 meminfo
 
 ```
 $ hippo -f bugreport_1528772162307.log meminfo
@@ -157,4 +104,88 @@ CmaTotal:         163840 kB
 CmaFree:               0 kB
 ```
 
-其他内容就不一一列举了, 可以通过 -l 查看.
+### 支持 zip 包
+
+两种方式都可以
+
+    hippo -f bugreport_1526359678499.log meminfo
+
+或
+
+    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip meminfo
+
+### 过滤 log
+
+(1) 缩小时间范围
+
+用 -m MINUTE, 只输出最近 MINUTE 分钟的 log, 结束时间是用户反馈 App 的启动时间.
+
+比如, 只显示最近 3 分钟的 events log.
+
+
+    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip events -m 3
+
+(2) 指定 pid 或 tid
+
+    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip log -p 2102
+    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip log -t 2105
+
+## 自定义规则
+
+### 目的
+
+自定义规则可以帮忙您快速定义已知问题.
+
+您可以将常见问题的关键日志补充到自定义规则. 使用自定义规则排查已知问题时, 可以减少重复的劳动.
+
+### 如何使用
+
+使用一个名为 slow 的自定义规则的方法是 `hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip -r slow`
+
+### 如何定义
+
+所有的自定义规则都定义在 rules.xml 文件中, 每一个规则对应一个 rule 标签.
+
+下面是一个名为 slow 的自定义规则, 它会帮您匹配出 dvm_lock_sample binder_sample 等 events log, 和包含制定关键字的 system log
+
+```
+<rule name="slow">
+    <elog tag="dvm_lock_sample"/>
+    <elog tag="binder_sample"/>
+    <elog tag="am_lifecycle_sample"/>
+    <log grep="Slow Operation" />
+    <log grep="Slow Input" />
+    <log grep="timeout" />
+    <log tag="Looper" grep="Dispatch took" />
+</rule>
+```
+
+rule 由规则项组成, 目前支持的规则项有 `<log/>` `<elog/>` `<perfevents/>`
+
+(1) `<log/>` 和 `<elog/>` 分别表示 system log 和 events log, 它们都支持下面的属性:
+
+属性 | 含义 | 举例
+--- | --- | ---
+tag | log 中的 tag | `<log tag="ActivityManager"/>`
+process | 进程名 | `<log process="system_server"/>`
+pid | 进程号 | `<log pid="2100"/>`
+tid | 线程号 | `<log tid="2100"/>`
+priority | 优先级, 可以是 VDIWE | `<log priority="W"/>`
+grep | 过滤关键词 | `<log grep="timeout"/>`
+
+
+(2) `<perfevent/>` 表示 perfevents (请先确认您的机型是否已经移植了 perfevents)
+
+属性 | 含义 | 举例
+--- | --- | ---
+process | 进程名 | `<perfevent process="system_server"/>`
+pid | 进程号 | `<perfevent pid="2100"/>`
+tid | 线程号 | `<perfevent tid="2100"/>`
+type | 类型 | `<perfevent type="JniMethod"/>`
+duration | 耗时 | `<perfevent duration="200"/>`
+
+
+
+
+
+
