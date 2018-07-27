@@ -1,16 +1,16 @@
 # HippoTool
 
-## 工具介绍
+## 1 工具介绍
 
 hippo 是一个帮助查看 bugreport 的终端工具. 
 
 bugreport 的内容非常多, 看起来很痛苦, 因此我们希望有这样一个工具, 它能帮助我们快速定位我们关注的性能信息, 并且使用简单.
 
-## 准备
+## 1.1 准备
 
 第一步, clone [仓库](http://git.n.xiaomi.com/sangyaohui/hippotool/tree/master) http://git.n.xiaomi.com/sangyaohui/hippotool.git
 
-第二步, 为了更方便地使用, 建议您将 hippo.py 改为可执行, 并创建链接, 将链接放在 PATH 路径中, 这里假设是 `/home/mi/bin`
+第二步, 为了更方便地使用, 建议您将 hippo.py 改为可执行, 并**创建链接**, 将链接放在 PATH 路径中, 这里假设是 `/home/mi/bin`
 
 ```
 $ sudo chmod a+x hippo.py
@@ -41,9 +41,9 @@ optional arguments:
 
 ```
 
-## 使用
+## 2 使用
 
-### 查看 bugreport
+### 2.1 查看 bugreport
 
 使用方法类似 systrace, 可以通过 `hippo -l` 查看所有支持的 categories, 然后选择感兴趣的部分输出.
 
@@ -104,7 +104,7 @@ CmaTotal:         163840 kB
 CmaFree:               0 kB
 ```
 
-### 支持 zip 包
+### 2.2 支持 zip 包
 
 两种方式都可以
 
@@ -114,7 +114,7 @@ CmaFree:               0 kB
 
     hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip meminfo
 
-### 过滤 log
+### 2.3 过滤 log
 
 (1) 缩小时间范围
 
@@ -130,19 +130,19 @@ CmaFree:               0 kB
     hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip log -p 2102
     hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip log -t 2105
 
-## 自定义规则
+## 3 自定义规则
 
-### 目的
+### 3.1 目的
 
 自定义规则可以帮忙您快速定义已知问题.
 
 您可以将常见问题的关键日志补充到自定义规则. 使用自定义规则排查已知问题时, 可以减少重复的劳动.
 
-### 如何使用
+### 3.2 如何使用
 
 使用一个名为 slow 的自定义规则的方法是 `hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip -r slow`
 
-### 如何定义
+### 3.3 如何定义
 
 所有的自定义规则都定义在 rules.xml 文件中, 每一个规则对应一个 rule 标签.
 
@@ -183,9 +183,3 @@ pid | 进程号 | `<perfevent pid="2100"/>`
 tid | 线程号 | `<perfevent tid="2100"/>`
 type | 类型 | `<perfevent type="JniMethod"/>`
 duration | 耗时 | `<perfevent duration="200"/>`
-
-
-
-
-
-
