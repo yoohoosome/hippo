@@ -7,7 +7,7 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 
-VERSION = '0.4.0'
+VERSION = '0.4.1'
 
 # Set Color Class
 class colors:
@@ -547,7 +547,7 @@ def main():
                 attr = condition.attrib
                 perfevents.extend(filter_perfevents(all_perfevents, **attr))
 
-    if not args.categories or 'log' in args.categories:
+    if 'log' in args.categories:
         system_logs.extend(filter_log(all_system_logs, pid=args.pid, tid=args.tid))
 
     if 'events' in args.categories:
