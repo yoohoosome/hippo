@@ -12,7 +12,21 @@
         <log tag="BaseMiuiPhoneWindowManager" grep="keyCode"/>
     </rule>
 
-    <!--2. 模块-->
+    <!--2. bugreport 模块-->
+
+    <rule name="events">
+        <elog/>
+        <elog tag="am_pss" mute="true"/>
+        <elog tag="auditd" mute="true"/>
+        <elog tag="chatty" mute="true"/>
+    </rule>
+
+    <rule name="log">
+        <log/>
+        <log tag="chatty" mute="true"/>
+    </rule>
+
+    <!--3. 功能模块-->
 
     <rule name="ams">
         <log tag="ActivityManager" process="system_server"/>
@@ -31,24 +45,34 @@
         <log tag="BaseMiuiPhoneWindowManager" grep="keyCode"/>
     </rule>
 
-    <!--3. 进程-->
+    <!--4. 进程-->
 
     <rule name="home">
         <log process="com.miui.home"/>
         <elog process="com.miui.home"/>
+        <elog tag="am_pss" mute="true"/>
+        <elog tag="auditd" mute="true"/>
+        <elog tag="chatty" mute="true"/>
     </rule>
 
     <rule name="systemui">
         <log process="com.android.systemui"/>
         <elog process="com.android.systemui"/>
+        <elog tag="am_pss" mute="true"/>
+        <elog tag="auditd" mute="true"/>
+        <elog tag="chatty" mute="true"/>
     </rule>
 
     <rule name="system">
         <log process="system_server"/>
         <elog process="system_server"/>
+        <elog tag="am_pss" mute="true"/>
+        <elog tag="auditd" mute="true"/>
+        <elog tag="chatty" mute="true"/>
+        <elog tag="cpu" mute="true"/>
     </rule>
 
-    <!--4. 问题-->
+    <!--5. 性能问题-->
 
     <rule name="lock">
         <elog tag="dvm_lock_sample" process="system_server"/>
@@ -64,7 +88,7 @@
         <log tag="Looper" grep="Dispatch took" />
     </rule>
 
-    <!--5. 关于 perfevent-->
+    <!--6. 关于 perfevent-->
 
     <!--耗时超过 200ms 的持锁事件-->
     <rule name="lockhold">

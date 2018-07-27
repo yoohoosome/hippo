@@ -10,7 +10,7 @@ bugreport 的内容非常多, 看起来很痛苦, 因此我们希望有这样一
 
 第一步, clone [仓库](http://git.n.xiaomi.com/sangyaohui/hippotool/tree/master) http://git.n.xiaomi.com/sangyaohui/hippotool.git
 
-第二步, 为了更方便地使用, 建议您将 hippo.py 改为可执行, 并**创建链接**, 将链接放在 PATH 路径中, 这里假设是 `/home/mi/bin`
+第二步, 为了更方便地使用, 建议您将 hippo.py 改为可执行, 并 **创建链接**, 将链接放在 PATH 路径中, 这里假设是 `/home/mi/bin`
 
 ```
 $ sudo chmod a+x hippo.py
@@ -146,7 +146,7 @@ CmaFree:               0 kB
 
 所有的自定义规则都定义在 rules.xml 文件中, 每一个规则对应一个 rule 标签.
 
-下面是一个名为 slow 的自定义规则, 它会帮您匹配出 dvm_lock_sample binder_sample 等 events log, 和包含制定关键字的 system log
+下面是一个名为 slow 的自定义规则, 它会帮您匹配出 dvm_lock_sample binder_sample 等 events log, 和包含关键字的 system log
 
 ```
 <rule name="slow">
@@ -170,8 +170,13 @@ tag | log 中的 tag | `<log tag="ActivityManager"/>`
 process | 进程名 | `<log process="system_server"/>`
 pid | 进程号 | `<log pid="2100"/>`
 tid | 线程号 | `<log tid="2100"/>`
-priority | 优先级, 可以是 VDIWE | `<log priority="W"/>`
+priority | 优先级, 可以是 `VDIWE` | `<log priority="W"/>`
 grep | 过滤关键词 | `<log grep="timeout"/>`
+mute | 屏蔽 log | `<log tag="chatty" mute="true"/>`
+
+说明:
+
+当 `mute="true"` 则满足条件的 log 会被屏蔽.
 
 
 (2) `<perfevent/>` 表示 perfevents (请先确认您的机型是否已经移植了 perfevents)

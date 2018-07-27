@@ -7,7 +7,7 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 
-VERSION = '0.4.2'
+VERSION = '0.5'
 
 # Set Color Class
 class colors:
@@ -111,9 +111,9 @@ class LogEntry:
             pid_str = ' ' + pid_str
         tid_str = str(self.tid)
         if self.tid < 100:
-            tid_str = '   ' + pid_str
+            tid_str = '   ' + tid_str
         elif self.tid < 1000:
-            tid_str = '  ' + pid_str
+            tid_str = '  ' + tid_str
         elif self.tid < 10000:
             tid_str = ' ' + tid_str
         time_str = self.time.strftime('%m-%d %H:%M:%S.%f')[:-3]
@@ -122,7 +122,7 @@ class LogEntry:
                                        self.priority, self.tag, self.message)
 
 
-def priority2level(level_str):
+def priority2level(level_str: str) -> int:
     levels = {'V': 1,
               'D': 2,
               'I': 3,
@@ -135,7 +135,7 @@ def priority2level(level_str):
     return levels[level_str]
 
 
-def read_lines(file_name):
+def read_lines(file_name: str) -> list:
     if zipfile.is_zipfile(file_name):
         with zipfile.ZipFile(file_name) as z:
             file_names = z.namelist()
@@ -152,7 +152,7 @@ def read_lines(file_name):
             return f.readlines()
 
 
-def get_logs(minute=None):
+def get_logs(minute: int=None) -> (list, list):
     for i in range(len(bugreport_lines)):
         if 'SYSTEM LOG (logcat' in bugreport_lines[i]:
             syslog_index_start = i + 2
@@ -192,40 +192,46 @@ def get_logs(minute=None):
         report_time = get_report_time(events_logs)
         start_time = report_time - timedelta(minutes=minute)
         system_logs = \
-            [log for log in system_logs if start_time < log.time < report_time]
+            [log for log in system_logs if start_time < log.time <= report_time]
         events_logs = \
-            [log for log in events_logs if start_time < log.time < report_time]
+            [log for log in events_logs if start_time < log.time <= report_time]
 
     return system_logs, events_logs
 
 
-def filter_log(logs,
-               pid=None,
-               tid=None,
-               tag=None,
-               grep=None,
-               priority=None,
-               process=None) -> list:
-    filtered_log = []
+def filter_log(logs: list,
+               pid: str=None,
+               tid: str=None,
+               tag: str=None,
+               grep: str=None,
+               priority: str=None,
+               process: str=None,
+               **kwargs) -> (list, list):
+    target_logs = []
+    rest_logs = []
     if process:
         pid = get_pid(process)
     for entry in logs:
         if pid and entry.pid != int(pid):
+            rest_logs.append(entry)
             continue
         if tid and entry.tid != int(tid):
+            rest_logs.append(entry)
             continue
         if tag and tag not in entry.tag:
+            rest_logs.append(entry)
             continue
         if grep and grep not in entry.message:
+            rest_logs.append(entry)
             continue
         if priority and entry.level < priority2level(priority):
+            rest_logs.append(entry)
             continue
+        target_logs.append(entry)
+    return target_logs, rest_logs
 
-        filtered_log.append(entry)
-    return filtered_log
 
-
-def get_proc_meminfo():
+def get_proc_meminfo() -> list:
     for i in range(len(bugreport_lines)):
         if 'MEMORY INFO (/proc/meminfo)' in bugreport_lines[i]:
             index_start = i
@@ -236,7 +242,7 @@ def get_proc_meminfo():
     return out_list
 
 
-def get_proc_pagetypeinfo():
+def get_proc_pagetypeinfo() -> list:
     for i in range(len(bugreport_lines)):
         if 'PAGETYPEINFO (/proc/pagetypeinfo)' in bugreport_lines[i]:
             index_start = i
@@ -247,7 +253,7 @@ def get_proc_pagetypeinfo():
     return out_list
 
 
-def get_total_pss():
+def get_total_pss() -> list:
     for i in range(len(bugreport_lines)):
         if 'Total PSS by process' in bugreport_lines[i]:
             index_start = i
@@ -258,7 +264,7 @@ def get_total_pss():
     return out_list
 
 
-def get_cpu_info():
+def get_cpu_info() -> list:
     for i in range(len(bugreport_lines)):
         if 'DUMPSYS CPUINFO (/system/bin/dumpsys -t 10 cpuinfo -a)' \
                 in bugreport_lines[i]:
@@ -270,7 +276,7 @@ def get_cpu_info():
     return out_list
 
 
-def get_dmesg():
+def get_dmesg() -> list:
     for i in range(len(bugreport_lines)):
         if '------ KERNEL LOG (dmesg) ------' in bugreport_lines[i]:
             first_index = i
@@ -281,7 +287,7 @@ def get_dmesg():
     return out_list
 
 
-def get_uptime():
+def get_uptime() -> list:
     uptime_list = []
     for i in range(len(bugreport_lines)):
         if '------ UPTIME (uptime) ------' in bugreport_lines[i]:
@@ -294,37 +300,42 @@ def get_uptime():
     return uptime_list[0]
 
 
-def get_report_time(elogs):
+def get_report_time(elogs) -> datetime:
     for log in elogs:
         if log.tag == 'am_proc_start' and 'com.miui.bugreport' in log.message:
             report_time = log.time
     return report_time
 
 
-def get_ps(lines):
-    for i in range(len(lines)):
-        if '------ PROCESSES AND THREADS (ps' in lines[i]:
+def get_ps() -> list:
+    for i in range(len(bugreport_lines)):
+        if '------ PROCESSES AND THREADS (ps' in bugreport_lines[i]:
             index_start = i
-        if "was the duration of 'PROCESSES AND THREADS'" in lines[i]:
+        if "was the duration of 'PROCESSES AND THREADS'" in bugreport_lines[i]:
             index_end = i
 
-    out_list = lines[index_start:index_end]
+    out_list = bugreport_lines[index_start:index_end]
     return out_list
 
 
-def get_top(lines):
-    for index in range(len(lines)):
-        if '------ CPU INFO (top' in lines[index]:
+def get_top() -> list:
+    for index in range(len(bugreport_lines)):
+        if '------ CPU INFO (top' in bugreport_lines[index]:
             index_start = index
-        if "was the duration of 'CPU INFO'" in lines[index]:
+        if "was the duration of 'CPU INFO'" in bugreport_lines[index]:
             index_end = index
 
-    out_list = lines[index_start:index_end]
+    out_list = bugreport_lines[index_start:index_end]
     return out_list
 
 
-def get_pid(process):
-    top_lines = get_top(bugreport_lines)
+top_lines = []
+
+
+def get_pid(process: str) -> int:
+    global top_lines
+    if not top_lines:
+        top_lines = get_top()
     dct = {}
     for line in top_lines:
         try:
@@ -345,7 +356,7 @@ def get_pid(process):
         raise Exception('没有 %s 这个进程' % process)
 
 
-def get_perfevents():
+def get_perfevents() -> list:
     event_list = []
     event_id = 1
     first_index = 0
@@ -381,7 +392,7 @@ def filter_perfevents(events,
                       duration: str=None,
                       process: str=None,
                       type: str=None,
-                      grep: str=None) -> list:
+                      **kwargs) -> list:
     rst_events = []
     for event_d in events:
         if process:
@@ -407,7 +418,7 @@ def filter_perfevents(events,
     return rst_events
 
 
-def print_event(event_d, print_policy=False):
+def print_event(event_d: dict, print_policy=False):
     if not print_policy:
         if 'schedGroup' in event_d:
             del event_d['schedGroup']
@@ -438,7 +449,7 @@ def print_event(event_d, print_policy=False):
     print('duration: %d\n' % dur)
 
 
-def print_perfevents(events):
+def print_perfevents(events: list):
     for event_d in events:
         if 'endTime' not in event_d or 'beginTime' not in event_d:
             continue
@@ -504,11 +515,12 @@ def get_target_rule(name):
     from os import path, readlink
     file_path = path.join(path.dirname(readlink(__file__)), 'rules.xml')
     tree = ET.ElementTree(file=file_path)
+    target_element = None
     for e in tree.iter(tag='rule'):
         if e.attrib['name'] == name:
             target_element = e
     if not target_element:
-        raise Exception('没找到符合要求的 rule')
+        raise Exception('没找到您要的规则: %s' % name)
     return target_element
 
 
@@ -547,19 +559,31 @@ def main():
         for condition in rule:
             if condition.tag == 'log':
                 attr = condition.attrib
-                system_logs.extend(filter_log(all_system_logs, **attr))
+                if 'mute' in attr and attr['mute'] == 'true':
+                    target_logs, rest_logs = filter_log(system_logs, **attr)
+                    system_logs = rest_logs
+                else:
+                    target_logs, rest_logs = filter_log(all_system_logs, **attr)
+                    system_logs.extend(target_logs)
             elif condition.tag == 'elog':
                 attr = condition.attrib
-                events_logs.extend(filter_log(all_events_logs, **attr))
+                if 'mute' in attr and attr['mute'] == 'true':
+                    target_logs, rest_logs = filter_log(events_logs, **attr)
+                    events_logs = rest_logs
+                else:
+                    target_logs, rest_logs = filter_log(all_events_logs, **attr)
+                    events_logs.extend(target_logs)
             elif condition.tag == 'perfevent':
                 attr = condition.attrib
                 perfevents.extend(filter_perfevents(all_perfevents, **attr))
 
     if 'log' in args.categories:
-        system_logs.extend(filter_log(all_system_logs, pid=args.pid, tid=args.tid))
+        target_logs, rest_logs = filter_log(all_system_logs, pid=args.pid, tid=args.tid)
+        system_logs.extend(target_logs)
 
     if 'events' in args.categories:
-        events_logs.extend(filter_log(all_events_logs, pid=args.pid, tid=args.tid))
+        target_logs, rest_logs = filter_log(all_events_logs, pid=args.pid, tid=args.tid)
+        events_logs.extend(target_logs)
 
     # 去重 排序
     system_logs = list(set(system_logs)) # todo: too low
