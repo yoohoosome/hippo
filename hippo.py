@@ -7,7 +7,7 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 
-VERSION = '0.4.1'
+VERSION = '0.4.2'
 
 # Set Color Class
 class colors:
@@ -103,10 +103,18 @@ class LogEntry:
 
     def __str__(self):
         pid_str = str(self.pid)
-        if self.pid < 10000:
+        if self.pid < 100:
+            pid_str = '   ' + pid_str
+        elif self.pid < 1000:
+            pid_str = '  ' + pid_str
+        elif self.pid < 10000:
             pid_str = ' ' + pid_str
         tid_str = str(self.tid)
-        if self.tid < 10000:
+        if self.tid < 100:
+            tid_str = '   ' + pid_str
+        elif self.tid < 1000:
+            tid_str = '  ' + pid_str
+        elif self.tid < 10000:
             tid_str = ' ' + tid_str
         time_str = self.time.strftime('%m-%d %H:%M:%S.%f')[:-3]
 
