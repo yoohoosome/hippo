@@ -7,7 +7,8 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 
-VERSION = '0.5'
+VERSION = '0.6'
+
 
 # Set Color Class
 class colors:
@@ -80,6 +81,35 @@ def print_lines(lines):
         print(line.rstrip())
 
 
+sysui_action_dct = {
+    '127': 'NOTIFICATION_PANEL',
+    '252': 'ACTION_FINGERPRINT_AUTH',
+    '319': 'APP_TRANSITION_DELAY',
+    '321': 'STARTING_WINDOW_DELAY',
+    '322': 'WINDOWS_DRAWN_DELAY',
+    '325': 'DEVICE_UPTIME_SECONDS',
+    '757': 'CATEGORY',
+    '758': 'TYPE',
+    '759': 'SUBTYPE',
+    '793': 'NOTIFICATION_SINCE_CREATE_MS',
+    '794': 'NOTIFICATION_SINCE_VISIBLE_MS',
+    '795': 'NOTIFICATION_SINCE_UPDATE_MS',
+    '799': 'NAME',
+    '801': 'BUCKET',
+    '802': 'VALUE',
+    '803': 'PACKAGE',
+    '804': 'HISTOGRAM',
+    '805': 'TIMESTAMP',
+    '806': 'PACKAGE',
+    '857': 'FIELD_NOTIFICATION_CHANNEL_ID',
+    '871': 'ACTIVITY',
+    '904': 'CALLING_PACKAGE',
+    '905': 'IS_EPHEMERAL',
+    '945': 'BIND_APPLICATION_DELAY',
+    '947': 'FIELD_NOTIFICATION_GROUP_SUMMARY',
+}
+
+
 # --------
 
 class LogEntry:
@@ -100,6 +130,20 @@ class LogEntry:
         self.message = log_d['message']
         if log_d['message2']:
             self.message = self.message + ' ' + log_d['message2']
+        if self.tag == 'sysui_multi_action' \
+                or self.tag == 'sysui_action' \
+                or self.tag == 'sysui_view_visibility':
+            words = self.message.lstrip('[').rstrip(']').split(',')
+            if len(words) % 2 != 0:
+                raise Exception('sysui_multi_action 解析失败: %s' % self.message)
+            message = '['
+            for i in range(0, len(words), 2):
+                k, v = words[i], words[i + 1]
+                if k in sysui_action_dct:
+                    message = message + '%s,%s,' % (sysui_action_dct[k], v)
+                else:
+                    message = message + '%s,%s,' % (k, v)
+            self.message = message.rstrip(',') + ']'
 
     def __str__(self):
         pid_str = str(self.pid)
@@ -152,7 +196,7 @@ def read_lines(file_name: str) -> list:
             return f.readlines()
 
 
-def get_logs(minute: int=None) -> (list, list):
+def get_logs(minute: int = None) -> (list, list):
     for i in range(len(bugreport_lines)):
         if 'SYSTEM LOG (logcat' in bugreport_lines[i]:
             syslog_index_start = i + 2
@@ -192,20 +236,22 @@ def get_logs(minute: int=None) -> (list, list):
         report_time = get_report_time(events_logs)
         start_time = report_time - timedelta(minutes=minute)
         system_logs = \
-            [log for log in system_logs if start_time < log.time <= report_time]
+            [log for log in system_logs if
+             start_time < log.time <= report_time]
         events_logs = \
-            [log for log in events_logs if start_time < log.time <= report_time]
+            [log for log in events_logs if
+             start_time < log.time <= report_time]
 
     return system_logs, events_logs
 
 
 def filter_log(logs: list,
-               pid: str=None,
-               tid: str=None,
-               tag: str=None,
-               grep: str=None,
-               priority: str=None,
-               process: str=None,
+               pid: str = None,
+               tid: str = None,
+               tag: str = None,
+               grep: str = None,
+               priority: str = None,
+               process: str = None,
                **kwargs) -> (list, list):
     target_logs = []
     rest_logs = []
@@ -387,11 +433,11 @@ def get_perfevents() -> list:
 
 
 def filter_perfevents(events,
-                      pid: str=None,
-                      tid: str=None,
-                      duration: str=None,
-                      process: str=None,
-                      type: str=None,
+                      pid: str = None,
+                      tid: str = None,
+                      duration: str = None,
+                      process: str = None,
+                      type: str = None,
                       **kwargs) -> list:
     rst_events = []
     for event_d in events:
@@ -443,16 +489,18 @@ def print_event(event_d: dict, print_policy=False):
     if 'packageName' in event_d and not event_d['packageName']:
         del event_d['packageName']
 
-    dur = event_d['endTime'] - event_d['beginTime']
     print(event_d['eventTypeName'])
     print(json.dumps(event_d, indent=4, separators=(',', ':'), sort_keys=True))
-    print('duration: %d\n' % dur)
+
+    if 'endTime' in event_d and 'beginTime' in event_d:
+        dur = event_d['endTime'] - event_d['beginTime']
+        print('duration: %d\n' % dur)
+    if 'maxFrameDuration' in event_d:
+        print('maxDuration: %d\n' % event_d['maxFrameDuration'])
 
 
 def print_perfevents(events: list):
     for event_d in events:
-        if 'endTime' not in event_d or 'beginTime' not in event_d:
-            continue
         print_event(event_d)
 
 
@@ -513,7 +561,8 @@ def parse_arguments():
 
 def get_target_rule(name):
     from os import path, readlink
-    file_path = path.join(path.dirname(readlink(__file__)), 'rules.xml')
+    dirname = path.dirname(readlink(__file__))
+    file_path = path.join(dirname, 'rules.xml')
     tree = ET.ElementTree(file=file_path)
     target_element = None
     for e in tree.iter(tag='rule'):
@@ -563,7 +612,8 @@ def main():
                     target_logs, rest_logs = filter_log(system_logs, **attr)
                     system_logs = rest_logs
                 else:
-                    target_logs, rest_logs = filter_log(all_system_logs, **attr)
+                    target_logs, rest_logs = filter_log(all_system_logs,
+                                                        **attr)
                     system_logs.extend(target_logs)
             elif condition.tag == 'elog':
                 attr = condition.attrib
@@ -571,22 +621,25 @@ def main():
                     target_logs, rest_logs = filter_log(events_logs, **attr)
                     events_logs = rest_logs
                 else:
-                    target_logs, rest_logs = filter_log(all_events_logs, **attr)
+                    target_logs, rest_logs = filter_log(all_events_logs,
+                                                        **attr)
                     events_logs.extend(target_logs)
             elif condition.tag == 'perfevent':
                 attr = condition.attrib
                 perfevents.extend(filter_perfevents(all_perfevents, **attr))
 
     if 'log' in args.categories:
-        target_logs, rest_logs = filter_log(all_system_logs, pid=args.pid, tid=args.tid)
+        target_logs, rest_logs = filter_log(all_system_logs, pid=args.pid,
+                                            tid=args.tid)
         system_logs.extend(target_logs)
 
     if 'events' in args.categories:
-        target_logs, rest_logs = filter_log(all_events_logs, pid=args.pid, tid=args.tid)
+        target_logs, rest_logs = filter_log(all_events_logs, pid=args.pid,
+                                            tid=args.tid)
         events_logs.extend(target_logs)
 
     # 去重 排序
-    system_logs = list(set(system_logs)) # todo: too low
+    system_logs = list(set(system_logs))  # todo: too low
     system_logs.sort(key=lambda log: log.time)
     print_logs(system_logs)
     events_logs = list(set(events_logs))

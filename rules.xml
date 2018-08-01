@@ -10,6 +10,16 @@
     <!--实体键事件处理-->
     <rule name="key">
         <log tag="BaseMiuiPhoneWindowManager" grep="keyCode"/>
+        <elog grep="key_back_down"/>
+    </rule>
+
+    <rule name="notification">
+        <elog grep="NOTIFICATION"/>
+        <elog tag="sysui_view_visibility" grep="NOTIFICATION_PANEL"/>
+    </rule>
+
+    <rule name="screen">
+        <elog tag="screen_toggled"/>
     </rule>
 
     <!--2. bugreport 模块-->
@@ -41,8 +51,11 @@
         <log tag="InputReader"/>
         <log tag="InputEventReceiver"/>
         <log grep="Slow Input"/>
-        <log tag="Looper" grep="Dispatch took" />
-        <log tag="BaseMiuiPhoneWindowManager" grep="keyCode"/>
+        <elog grep="key_back_down"/>
+    </rule>
+
+    <rule name="cpu">
+        <elog tag="cpu"/>
     </rule>
 
     <!--4. 进程-->
@@ -82,10 +95,12 @@
         <elog tag="dvm_lock_sample"/>
         <elog tag="binder_sample"/>
         <elog tag="am_lifecycle_sample"/>
+        <elog grep="APP_TRANSITION_DELAY"/>
         <log grep="Slow Operation" />
         <log grep="Slow Input" />
         <log grep="timeout" />
         <log tag="Looper" grep="Dispatch took" />
+        <log tag="mmid" mute="true"/>
     </rule>
 
     <!--6. 关于 perfevent-->
@@ -99,5 +114,14 @@
     <rule name="jni">
         <perfevent type="JniMethod" process="system_server" duration="200"/>
     </rule>
+
+    <rule name="duration">
+        <perfevent process="system_server" duration="1000"/>
+    </rule>
+
+    <rule name="jank">
+        <perfevent type="JankRecord"/>
+    </rule>
+
 
 </root>

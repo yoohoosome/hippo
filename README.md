@@ -33,3 +33,7 @@ v0.4:
 v0.5:
 
 `<log/>` `<elog/>` 支持 mute 属性, 当 mute 为 true, 屏蔽满足条件的日志
+
+v0.6:
+
+自动翻译 sysui_multi_action 等 events log, 补充自定义规则
