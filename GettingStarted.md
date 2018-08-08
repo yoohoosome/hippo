@@ -21,50 +21,86 @@ $ ln -s <仓库绝对路径>/hippo.py <PATH>/hippo
 
 ```
 $ hippo -h
-usage: hippo [-h] [-f FILE] [-p PID] [-t TID] [-m MINUTE] [-r RULE] [-l] [-v]
-             [categories [categories ...]]
+usage: hippo [-h] [-m MINUTE] [-l] [-v] [--hint] [file] [rule]
 
 positional arguments:
-  categories            需要显示的内容分类
+  file                  指定文件作为数据源 (支持 zip 包)
+  rule                  自定义规则
 
 optional arguments:
   -h, --help            show this help message and exit
-  -f FILE, --file FILE  指定文件作为数据源
-  -p PID, --pid PID     指定进程 PID
-  -t TID, --tid TID     指定线程 TID
   -m MINUTE, --minute MINUTE
                         只显示最近 MINUTE 分钟的日志
-  -r RULE, --rule RULE  使用自定义规则
-  -l, --list-categories
-                        显示可用的内容分类
+  -l, --list-rules      显示可用的规则
   -v, --version         显示版本
-
+  --hint                显示 events log 含义提示
 ```
 
 ## 3 使用
 
 ### 3.1 查看 bugreport
 
-使用方法类似 systrace, 可以通过 `hippo -l` 查看所有支持的 categories, 然后选择感兴趣的部分输出.
+指定 bugreport 默认输出用户反馈信息.
+
+```
+$ hippo 2018-07-29-112838-59434332-k6ZXjO4LYb.zip          
+反馈时间     2018-07-29-112717
+反馈内容     微信界面，下拉通知，打字都非常卡。比如刚才的11点20多分的时候
+机型         MI 6, sagit
+平台         qcom, msm8998
+Android      8.0.0
+MIUI         8.7.26, V10
+region       CN
+buildType    user
+buildId      OPR1.170623.027
+imeiSha1     f1d9f47adc700531d3862c69d6138c062722acda
+imeiSha2     1d213c56bc6637093a5aa1525fc76f83f8aec3b79ee8358f8f6eb7483cb06c15
+networkName  中国移动
+```
+
+类似 systrace, 使用 `hippo -l` 显示可以使用的规则.
 
 ```
 $ hippo -l
-         log - system log
-      events - events log
-      kernel - dmesg
-      uptime - uptime
-         cpu - dumpsys cpuinfo
-         top - top
-          ps - ps
-         pss - total pss
-     meminfo - cat /proc/meminfo
-pagetypeinfo - cat /proc/pagetypeinfo
+您可以直接使用以下规则:
+           dmesg - dmesg
+          uptime - uptime
+         cpuinfo - dumpsys cpuinfo
+             top - top
+              ps - ps
+             pss - total pss
+         meminfo - cat /proc/meminfo
+    pagetypeinfo - cat /proc/pagetypeinfo
+          report - 用户启动用户反馈的时间
+             key - 实体键事件处理
+    notification - 通知相关
+          screen - 锁屏与解锁
+          events - events log
+             log - system log
+            perf - perfevents
+             ams - AMS 相关
+             wms - WMS 相关
+           input - 输入相关
+             cpu - cpu 负载
+            home - 桌面进程
+        systemui - systemui 进程
+          system - system_server 进程
+          weixin - com.tencent.mm 进程
+              im - sogou 输入法进程
+            lock - 等锁
+            slow - 各种超时
+        lockhold - perfevents: system_server 中超过 200ms 的持锁
+             jni - perfevents: system_server 中超过 200ms 的 JNI 调用
+        duration - perfevents: system_server 中超过 1000ms 的所有事件
+            jank - perfevents: 超过 100ms 的绘制卡顿
+
+您还可以在 /home/sang/gitProjects/hippotool/rules.xml 中扩展上面的规则
 ```
 
-比如查看 meminfo
+指定规则输出. 比如查看 meminfo, 第一个参数是 bugreport, 第二个参数是规则名
 
 ```
-$ hippo -f bugreport_1528772162307.log meminfo
+$ hippo 2018-07-29-112838-59434332-k6ZXjO4LYb.zip meminfo
 ------ MEMORY INFO (/proc/meminfo) ------
 MemTotal:        3815220 kB
 MemFree:           66364 kB
@@ -104,17 +140,7 @@ CmaTotal:         163840 kB
 CmaFree:               0 kB
 ```
 
-### 3.2 支持 zip 包
-
-两种方式都可以
-
-    hippo -f bugreport_1526359678499.log meminfo
-
-或
-
-    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip meminfo
-
-### 3.3 过滤 log
+### 3.2 按时间过滤
 
 (1) 缩小时间范围
 
@@ -122,13 +148,7 @@ CmaFree:               0 kB
 
 比如, 只显示最近 3 分钟的 events log.
 
-
-    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip events -m 3
-
-(2) 指定 pid 或 tid
-
-    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip log -p 2102
-    hippo -f 2018-05-15-094808-48215937-4QUpycmkyR.zip log -t 2105
+    hippo 2018-05-15-094808-48215937-4QUpycmkyR.zip events -m 3
 
 ## 4 自定义规则
 

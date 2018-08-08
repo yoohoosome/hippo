@@ -3,50 +3,54 @@
     <!--1. 事件-->
 
     <!--用户启动用户反馈的时间-->
-    <rule name="report">
+    <rule name="report" describe="用户启动用户反馈的时间">
         <elog tag="am_proc_start" grep="com.miui.bugreport"/>
     </rule>
 
     <!--实体键事件处理-->
-    <rule name="key">
+    <rule name="key" describe="实体键事件处理">
         <log tag="BaseMiuiPhoneWindowManager" grep="keyCode"/>
         <elog grep="key_back_down"/>
     </rule>
 
-    <rule name="notification">
+    <rule name="notification" describe="通知相关">
         <elog grep="NOTIFICATION"/>
         <elog tag="sysui_view_visibility" grep="NOTIFICATION_PANEL"/>
     </rule>
 
-    <rule name="screen">
+    <rule name="screen" describe="锁屏与解锁">
         <elog tag="screen_toggled"/>
     </rule>
 
     <!--2. bugreport 模块-->
 
-    <rule name="events">
+    <rule name="events" describe="events log">
         <elog/>
         <elog tag="am_pss" mute="true"/>
         <elog tag="auditd" mute="true"/>
         <elog tag="chatty" mute="true"/>
     </rule>
 
-    <rule name="log">
+    <rule name="log" describe="system log">
         <log/>
         <log tag="chatty" mute="true"/>
     </rule>
 
+    <rule name="perf" describe="perfevents">
+        <perfevent/>
+    </rule>
+
     <!--3. 功能模块-->
 
-    <rule name="ams">
+    <rule name="ams" describe="AMS 相关">
         <log tag="ActivityManager" process="system_server"/>
     </rule>
 
-    <rule name="wms">
+    <rule name="wms" describe="WMS 相关">
         <log tag="WindowManager" process="system_server"/>
     </rule>
 
-    <rule name="input">
+    <rule name="input" describe="输入相关">
         <log tag="InputDispatcher"/>
         <log tag="InputReader"/>
         <log tag="InputEventReceiver"/>
@@ -54,13 +58,13 @@
         <elog grep="key_back_down"/>
     </rule>
 
-    <rule name="cpu">
+    <rule name="cpu" describe="cpu 负载">
         <elog tag="cpu"/>
     </rule>
 
     <!--4. 进程-->
 
-    <rule name="home">
+    <rule name="home" describe="桌面进程">
         <log process="com.miui.home"/>
         <elog process="com.miui.home"/>
         <elog tag="am_pss" mute="true"/>
@@ -68,7 +72,7 @@
         <elog tag="chatty" mute="true"/>
     </rule>
 
-    <rule name="systemui">
+    <rule name="systemui" describe="systemui 进程">
         <log process="com.android.systemui"/>
         <elog process="com.android.systemui"/>
         <elog tag="am_pss" mute="true"/>
@@ -76,7 +80,7 @@
         <elog tag="chatty" mute="true"/>
     </rule>
 
-    <rule name="system">
+    <rule name="system" describe="system_server 进程">
         <log process="system_server"/>
         <elog process="system_server"/>
         <elog tag="am_pss" mute="true"/>
@@ -85,43 +89,59 @@
         <elog tag="cpu" mute="true"/>
     </rule>
 
+    <rule name="weixin" describe="com.tencent.mm 进程">
+        <log process="com.tencent.mm"/>
+        <log grep="com.tencent.mm"/>
+        <elog process="com.tencent.mm"/>
+        <elog grep="com.tencent.mm"/>
+    </rule>
+
+    <rule name="im" describe="sogou 输入法进程">
+        <log process="com.sohu.inputmethod.sogou.xiaomi"/>
+        <log grep="com.sohu.inputmethod.sogou.xiaomi"/>
+        <elog process="com.sohu.inputmethod.sogou.xiaomi"/>
+        <elog grep="com.sohu.inputmethod.sogou.xiaomi"/>
+    </rule>
+
     <!--5. 性能问题-->
 
-    <rule name="lock">
+    <rule name="lock" describe="等锁">
         <elog tag="dvm_lock_sample" process="system_server"/>
     </rule>
 
-    <rule name="slow">
+    <rule name="slow" describe="各种超时">
         <elog tag="dvm_lock_sample"/>
         <elog tag="binder_sample"/>
         <elog tag="am_lifecycle_sample"/>
         <elog grep="APP_TRANSITION_DELAY"/>
         <log grep="Slow Operation" />
         <log grep="Slow Input" />
+        <log grep="slow" />
+        <log grep="took" />
         <log grep="timeout" />
         <log tag="Looper" grep="Dispatch took" />
+        <log grep="too much" />
         <log tag="mmid" mute="true"/>
     </rule>
 
     <!--6. 关于 perfevent-->
 
     <!--耗时超过 200ms 的持锁事件-->
-    <rule name="lockhold">
+    <rule name="lockhold" describe="perfevents: system_server 中超过 200ms 的持锁">
         <perfevent type="LockHold" process="system_server" duration="200"/>
     </rule>
 
     <!--耗时超过 200ms 的 JNI 调用-->
-    <rule name="jni">
+    <rule name="jni" describe="perfevents: system_server 中超过 200ms 的 JNI 调用">
         <perfevent type="JniMethod" process="system_server" duration="200"/>
     </rule>
 
-    <rule name="duration">
+    <rule name="duration" describe="perfevents: system_server 中超过 1000ms 的所有事件">
         <perfevent process="system_server" duration="1000"/>
     </rule>
 
-    <rule name="jank">
-        <perfevent type="JankRecord"/>
+    <rule name="jank" describe="perfevents: 超过 100ms 的绘制卡顿">
+        <perfevent type="JankRecord" duration="100"/>
     </rule>
-
 
 </root>

@@ -37,3 +37,11 @@ v0.5:
 v0.6:
 
 自动翻译 sysui_multi_action 等 events log, 补充自定义规则
+
+v0.7
+
+1. 按时间顺序混排 system log 和 events log
+1. 简化命令行参数: 第一个参数是 bugreport 文件, 第二个参数是规则, 比如 `hippo 2018-07-29-112838-59434332-k6ZXjO4LYb.zip slow`
+1. `hippo -l` 改为显示所有可用规则
+1. `hippo --hint` 显示常用 events log 含义提醒
+1. 支持解析用户反馈信息, 使用方法 `hippo 2018-07-29-112838-59434332-k6ZXjO4LYb.zip` 或 `hippo 2018-07-29-112838-59434332-k6ZXjO4LYb.zip summary`

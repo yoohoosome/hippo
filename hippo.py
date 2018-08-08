@@ -7,11 +7,11 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 
-VERSION = '0.6'
+VERSION = '0.7'
 
 
 # Set Color Class
-class colors:
+class Colors:
     BLACK = '\033[0;30m'
     DARK_GRAY = '\033[1;30m'
     LIGHT_GRAY = '\033[0;37m'
@@ -34,11 +34,11 @@ class colors:
 
 
 def print_green(string):
-    print(colors.YELLOW + string + colors.ENDC)
+    print(Colors.YELLOW + string + Colors.ENDC)
 
 
 def print_yellow(string):
-    print(colors.BLUE + string + colors.ENDC)
+    print(Colors.BLUE + string + Colors.ENDC)
 
 
 '''
@@ -417,12 +417,25 @@ def get_perfevents() -> list:
     if not first_index or not last_index:
         return []
 
+    uptime_diff = 0
     for line in bugreport_lines[first_index:last_index]:
         if 'eventTypeName' not in line:
             continue
         event_type, json_str = line.split(':', 1)
         try:
             event_d = json.loads(json_str)
+            if event_d['eventTypeName'] == 'JankRecord':
+                occur_time = event_d['occurTime']
+                received_uptime = event_d['receivedUptime']
+                received_current_time = event_d['receivedCurrentTime']
+                uptime_diff = received_current_time - received_uptime
+                uptime = occur_time + uptime_diff
+                time = datetime.fromtimestamp(uptime / 1000)
+                event_d['timestamp'] = time.strftime('%m-%d %H:%M:%S.%f')[:-3]
+            elif 'beginTime' in event_d and uptime_diff:
+                uptime = event_d['beginTime'] + uptime_diff
+                time = datetime.fromtimestamp(uptime / 1000)
+                event_d['timestamp'] = time.strftime('%m-%d %H:%M:%S.%f')[:-3]
             event_d['eventId'] = event_id
             event_list.append(event_d)
             event_id = event_id + 1
@@ -496,7 +509,8 @@ def print_event(event_d: dict, print_policy=False):
         dur = event_d['endTime'] - event_d['beginTime']
         print('duration: %d\n' % dur)
     if 'maxFrameDuration' in event_d:
-        print('maxDuration: %d\n' % event_d['maxFrameDuration'])
+        print('maxDuration: %d' % event_d['maxFrameDuration'])
+        print('totalDuration: %d\n' % event_d['totalDuration'])
 
 
 def print_perfevents(events: list):
@@ -505,18 +519,69 @@ def print_perfevents(events: list):
 
 
 def show_categories():
-    print('您可以使用下面的内容分类:')
-    print('         log - system log')
-    print('      events - events log')
-    print('      kernel - dmesg')
-    print('      uptime - uptime')
-    print('         cpu - dumpsys cpuinfo')
-    print('         top - top')
-    print('          ps - ps')
-    print('         pss - total pss')
-    print('     meminfo - cat /proc/meminfo')
-    print('pagetypeinfo - cat /proc/pagetypeinfo')
+    print('           dmesg - dmesg')
+    print('          uptime - uptime')
+    print('         cpuinfo - dumpsys cpuinfo')
+    print('             top - top')
+    print('              ps - ps')
+    print('             pss - total pss')
+    print('         meminfo - cat /proc/meminfo')
+    print('    pagetypeinfo - cat /proc/pagetypeinfo')
 
+
+def show_rules():
+    print('您可以直接使用以下规则:')
+    show_categories()
+    from os import path, readlink
+    dirname = path.dirname(readlink(__file__))
+    file_path = path.join(dirname, 'rules.xml')
+    tree = ET.ElementTree(file=file_path)
+    for e in tree.iter(tag='rule'):
+        name = e.attrib['name']
+        if len(name) < 16:
+            name = (16 - len(name)) * ' ' + name
+        if 'describe' in e.attrib:
+            print('%s - %s' % (name, e.attrib['describe']))
+        else:
+            print(name)
+    print('\n您还可以在 %s 中扩展上面的规则' % file_path)
+
+
+def show_summary(file_name: str):
+    if not zipfile.is_zipfile(file_name):
+        return
+
+    with zipfile.ZipFile(file_name) as z:
+        for file_name in z.namelist():
+            if file_name == 'summary.txt':
+                with z.open(file_name) as f:
+                    summary_str = f.read().decode('utf-8')
+                    summary_d = json.loads(summary_str)
+                    print('反馈时间     %s' % summary_d['timestamp'])
+                    print('反馈内容     %s' % summary_d['content'])
+            if file_name == 'sys_version.txt':
+                with z.open(file_name) as f:
+                    summary_str = f.read().decode('utf-8')
+                    info_d = json.loads(summary_str)
+                    print('机型         %s, %s' % (info_d['model'], info_d['deviceName']))
+                    print('平台         %s, %s' % (info_d['productHardware'], info_d['productBoard']))
+                    print('Android      %s' % info_d['osVersion'])
+                    print('MIUI         %s, %s' % (info_d['miVersion'], info_d['miuiBigVersion']))
+                    print('region       %s' % info_d['region'])
+                    print('buildType    %s' % info_d['buildType'])
+                    print('buildId      %s' % info_d['buildId'])
+                    print('imeiSha1     %s' % info_d['imeiSha1'])
+                    print('imeiSha2     %s' % info_d['imeiSha2'])
+                    print('networkName  %s' % info_d['networkName'])
+
+
+def show_events_hint():
+    print('cpu (total|1|6),(user|1|6),(system|1|6),(iowait|1|6),(irq|1|6),'
+          '(softirq|1|6)')
+    print('am_pss (Pid|1|5),(UID|1|5),(Process Name|3),(Pss|2|2),(Uss|2|2),(SwapPss|2|2)')
+    print('dvm_lock_sample (process|3),(main|1|5),(thread|3),(time|1|3),(file|3),(line|1|5),(ownerfile|3),(ownerline|1|5),(sample_percent|1|6)')
+    print('am_lifecycle_sample (User|1|5),(Process Name|3),(MessageCode|1|5),(time|1|3)')
+    print('am_mem_factor (Current|1|5),(Previous|1|5)')
 
 def print_version():
     print('Version: ' + VERSION)
@@ -524,38 +589,29 @@ def print_version():
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('categories',
-                        nargs='*',
-                        help='需要显示的内容分类')
-    parser.add_argument('-f',
-                        '--file',
-                        help='指定文件作为数据源',
-                        dest='file')
-    parser.add_argument('-p',
-                        '--pid',
-                        type=int,
-                        help='指定进程 PID')
-    parser.add_argument('-t',
-                        '--tid',
-                        type=int,
-                        help='指定线程 TID')
+    parser.add_argument('file',
+                        nargs='?',
+                        help='指定文件作为数据源 (支持 zip 包)')
+    parser.add_argument('rule',
+                        nargs='?',
+                        default='summary',
+                        help='指定规则名')
     parser.add_argument('-m',
                         '--minute',
                         type=int,
                         help='只显示最近 MINUTE 分钟的日志')
-    parser.add_argument('-r',
-                        '--rule',
-                        type=str,
-                        help='使用自定义规则')
     parser.add_argument('-l',
-                        '--list-categories',
+                        '--list-rules',
                         action='store_true',
-                        help='显示可用的内容分类',
+                        help='显示可用的规则',
                         dest='list')
     parser.add_argument('-v',
                         '--version',
                         action='store_true',
                         help='显示版本')
+    parser.add_argument('--hint',
+                        action='store_true',
+                        help='显示 events log 含义提示')
     return parser.parse_args()
 
 
@@ -587,11 +643,20 @@ def main():
         return
 
     if args.list:
-        show_categories()
+        show_rules()
+        return
+
+    if args.hint:
+        show_events_hint()
         return
 
     if not args.file:
-        print('请使用 -f 指定 bugreport, 或使用 -h 查看使用说明')
+        print('终于等到你!')
+        print('请指定一份 bugreport, 比如 hippo 2018-07-29-112838-59434332-k6ZXjO4LYb.zip')
+        return
+
+    if args.rule == 'summary':
+        show_summary(args.file)
         return
 
     global bugreport_lines, all_system_logs, all_events_logs, all_perfevents
@@ -599,77 +664,70 @@ def main():
     all_perfevents = get_perfevents()
     all_system_logs, all_events_logs = get_logs(args.minute)
 
+    if 'pss' == args.rule:
+        print_lines(get_total_pss())
+        return
+
+    if 'meminfo' == args.rule:
+        print_lines(get_proc_meminfo())
+        return
+
+    if 'pagetypeinfo' == args.rule:
+        print_lines(get_proc_pagetypeinfo())
+        return
+
+    if 'cpuinfo' == args.rule:
+        print_lines(get_cpu_info())
+        return
+
+    if 'dmesg' == args.rule:
+        print_lines(get_dmesg())
+        return
+
+    if 'uptime' == args.rule:
+        print_lines([get_uptime()])
+        return
+
+    if 'ps' == args.rule:
+        print_lines(get_ps())
+        return
+
+    if 'top' == args.rule:
+        print_lines(get_top())
+        return
+
     system_logs = []
     events_logs = []
     perfevents = []
 
-    if args.rule:
-        rule = get_target_rule(args.rule)
-        for condition in rule:
-            if condition.tag == 'log':
-                attr = condition.attrib
-                if 'mute' in attr and attr['mute'] == 'true':
-                    target_logs, rest_logs = filter_log(system_logs, **attr)
-                    system_logs = rest_logs
-                else:
-                    target_logs, rest_logs = filter_log(all_system_logs,
-                                                        **attr)
-                    system_logs.extend(target_logs)
-            elif condition.tag == 'elog':
-                attr = condition.attrib
-                if 'mute' in attr and attr['mute'] == 'true':
-                    target_logs, rest_logs = filter_log(events_logs, **attr)
-                    events_logs = rest_logs
-                else:
-                    target_logs, rest_logs = filter_log(all_events_logs,
-                                                        **attr)
-                    events_logs.extend(target_logs)
-            elif condition.tag == 'perfevent':
-                attr = condition.attrib
-                perfevents.extend(filter_perfevents(all_perfevents, **attr))
-
-    if 'log' in args.categories:
-        target_logs, rest_logs = filter_log(all_system_logs, pid=args.pid,
-                                            tid=args.tid)
-        system_logs.extend(target_logs)
-
-    if 'events' in args.categories:
-        target_logs, rest_logs = filter_log(all_events_logs, pid=args.pid,
-                                            tid=args.tid)
-        events_logs.extend(target_logs)
+    rule = get_target_rule(args.rule)
+    for condition in rule:
+        if condition.tag == 'log':
+            attr = condition.attrib
+            if 'mute' in attr and attr['mute'] == 'true':
+                target_logs, rest_logs = filter_log(system_logs, **attr)
+                system_logs = rest_logs
+            else:
+                target_logs, rest_logs = filter_log(all_system_logs,
+                                                    **attr)
+                system_logs.extend(target_logs)
+        elif condition.tag == 'elog':
+            attr = condition.attrib
+            if 'mute' in attr and attr['mute'] == 'true':
+                target_logs, rest_logs = filter_log(events_logs, **attr)
+                events_logs = rest_logs
+            else:
+                target_logs, rest_logs = filter_log(all_events_logs,
+                                                    **attr)
+                events_logs.extend(target_logs)
+        elif condition.tag == 'perfevent':
+            attr = condition.attrib
+            perfevents.extend(filter_perfevents(all_perfevents, **attr))
 
     # 去重 排序
-    system_logs = list(set(system_logs))  # todo: too low
-    system_logs.sort(key=lambda log: log.time)
-    print_logs(system_logs)
-    events_logs = list(set(events_logs))
-    events_logs.sort(key=lambda log: log.time)
-    print_logs(events_logs)
-    print_perfevents(perfevents)
-
-    if 'pss' in args.categories:
-        print_lines(get_total_pss())
-
-    if 'meminfo' in args.categories:
-        print_lines(get_proc_meminfo())
-
-    if 'pagetypeinfo' in args.categories:
-        print_lines(get_proc_pagetypeinfo())
-
-    if 'cpu' in args.categories:
-        print_lines(get_cpu_info())
-
-    if 'kernel' in args.categories:
-        print_lines(get_dmesg())
-
-    if 'uptime' in args.categories:
-        print_lines([get_uptime()])
-
-    if 'ps' in args.categories:
-        print_lines(get_ps())
-
-    if 'top' in args.categories:
-        print_lines(get_top())
+    logs = list(set(system_logs + events_logs))  # todo: too low
+    logs.sort(key=lambda log: log.time)
+    print_logs(logs)
 
 
 if __name__ == '__main__':
