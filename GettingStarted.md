@@ -146,9 +146,24 @@ CmaFree:               0 kB
 
 用 -m MINUTE, 只输出最近 MINUTE 分钟的 log, 结束时间是用户反馈 App 的启动时间.
 
-比如, 只显示最近 3 分钟的 events log.
+比如, 只显示最近 1 分钟的超时日志.
 
-    hippo 2018-05-15-094808-48215937-4QUpycmkyR.zip events -m 3
+```
+$ hippo 2018-07-29-112838-59434332-k6ZXjO4LYb.zip slow -m 1
+07-29 11:25:23.691  1354  1410 D BatteryStatsImpl: Reading cpu stats took 380 ms
+07-29 11:25:33.374  1354  1354 I am_lifecycle_sample: [0,NULL,200,3797]
+07-29 11:25:33.389 26758 26758 I Choreographer: Skipped 61 frames!  The application may be doing too much work on its main thread.
+07-29 11:25:33.423  1354  1426 I sysui_multi_action: [APP_TRANSITION_DELAY,1107,WINDOWS_DRAWN_DELAY,1108,DEVICE_UPTIME_SECONDS,83324,CATEGORY,761,TYPE,9,SUBTYPE,2,PACKAGE,com.tencent.mm,ACTIVITY,com.tencent.mm.ui.LauncherUI,IS_EPHEMERAL,0]
+07-29 11:25:35.019 26912 26912 I dvm_lock_sample: [com.tencent.mm:push,1,main,823,SourceFile,167,Binder.java,-2,0]
+07-29 11:25:35.041 26758 26758 I Choreographer: Skipped 50 frames!  The application may be doing too much work on its main thread.
+07-29 11:25:40.477 26758 26758 I Choreographer: Skipped 270 frames!  The application may be doing too much work on its main thread.
+07-29 11:25:44.819 26758 26758 I Choreographer: Skipped 148 frames!  The application may be doing too much work on its main thread.
+07-29 11:25:44.824  2174  2174 I Choreographer: Skipped 198 frames!  The application may be doing too much work on its main thread.
+07-29 11:25:49.689 26758 26758 I Choreographer: Skipped 190 frames!  The application may be doing too much work on its main thread.
+07-29 11:25:52.634 26758 26758 I Choreographer: Skipped 170 frames!  The application may be doing too much work on its main thread.
+07-29 11:25:57.648  1354  1426 I sysui_multi_action: [APP_TRANSITION_DELAY,123,WINDOWS_DRAWN_DELAY,127,DEVICE_UPTIME_SECONDS,83349,CATEGORY,761,TYPE,9,SUBTYPE,2,PACKAGE,com.miui.home,ACTIVITY,com.miui.home.launcher.Launcher,IS_EPHEMERAL,0]
+07-29 11:26:08.774  1354  1426 I sysui_multi_action: [APP_TRANSITION_DELAY,97,STARTING_WINDOW_DELAY,97,WINDOWS_DRAWN_DELAY,409,DEVICE_UPTIME_SECONDS,83360,CATEGORY,761,TYPE,7,SUBTYPE,1,PACKAGE,com.miui.userguide,ACTIVITY,com.miui.userguide.HomeActivity,IS_EPHEMERAL,0,BIND_APPLICATION_DELAY,76]
+```
 
 ## 4 自定义规则
 

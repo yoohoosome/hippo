@@ -7,7 +7,7 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 
-VERSION = '0.7'
+VERSION = '0.7.1'
 
 
 # Set Color Class
@@ -144,6 +144,8 @@ class LogEntry:
                 else:
                     message = message + '%s,%s,' % (k, v)
             self.message = message.rstrip(',') + ']'
+        elif self.tag == '[30089]':
+            self.tag = 'skipped_frames'
 
     def __str__(self):
         pid_str = str(self.pid)
@@ -467,12 +469,13 @@ def filter_perfevents(events,
             if 'threadId' not in event_d or event_d['threadId'] != tid:
                 continue
         if duration:
-            if 'endTime' not in event_d or 'beginTime' not in event_d:
+            if 'maxDuration' in event_d and event_d['maxDuration'] < int(duration):
                 continue
-            end_time = int(event_d['endTime'])
-            start_time = int(event_d['beginTime'])
-            if int(duration) > (end_time - start_time):
-                continue
+            if 'endTime' in event_d and 'beginTime' in event_d:
+                end_time = int(event_d['endTime'])
+                start_time = int(event_d['beginTime'])
+                if (end_time - start_time) < int(duration):
+                    continue
         rst_events.append(event_d)
     return rst_events
 
@@ -580,6 +583,7 @@ def show_events_hint():
           '(softirq|1|6)')
     print('am_pss (Pid|1|5),(UID|1|5),(Process Name|3),(Pss|2|2),(Uss|2|2),(SwapPss|2|2)')
     print('dvm_lock_sample (process|3),(main|1|5),(thread|3),(time|1|3),(file|3),(line|1|5),(ownerfile|3),(ownerline|1|5),(sample_percent|1|6)')
+    print('binder_sample (descriptor|3),(method_num|1|5),(time|1|3),(blocking_package|3),(sample_percent|1|6)')
     print('am_lifecycle_sample (User|1|5),(Process Name|3),(MessageCode|1|5),(time|1|3)')
     print('am_mem_factor (Current|1|5),(Previous|1|5)')
 
@@ -728,6 +732,7 @@ def main():
     logs = list(set(system_logs + events_logs))  # todo: too low
     logs.sort(key=lambda log: log.time)
     print_logs(logs)
+    print_perfevents(perfevents)
 
 
 if __name__ == '__main__':
