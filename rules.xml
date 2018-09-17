@@ -22,6 +22,11 @@
         <elog tag="screen_toggled"/>
     </rule>
 
+    <rule name="crash" describe="java异常导致crash">
+        <log tag="AndroidRuntime" priority="E"/>
+        <log priority="F"/>
+    </rule>
+
     <!--2. bugreport 模块-->
 
     <rule name="events" describe="events log">
@@ -33,6 +38,15 @@
 
     <rule name="log" describe="system log">
         <log/>
+        <log tag="chatty" mute="true"/>
+    </rule>
+
+    <rule name="logs" describe="system log">
+        <elog/>
+        <log/>
+        <elog tag="am_pss" mute="true"/>
+        <elog tag="auditd" mute="true"/>
+        <elog tag="chatty" mute="true"/>
         <log tag="chatty" mute="true"/>
     </rule>
 
@@ -60,6 +74,7 @@
 
     <rule name="cpu" describe="cpu 负载">
         <elog tag="cpu"/>
+        <log tag="dex2oat" grep="took"/>
     </rule>
 
     <!--4. 进程-->
@@ -98,6 +113,14 @@
         <elog grep="com.tencent.mm"/>
     </rule>
 
+    <rule name="photo" describe="相册">
+        <log process="com.miui.gallery"/>
+        <log grep="com.miui.gallery"/>
+        <elog process="com.miui.gallery"/>
+        <elog grep="com.miui.gallery"/>
+    </rule>
+
+
     <rule name="im" describe="sogou 输入法进程">
         <log process="com.sohu.inputmethod.sogou.xiaomi"/>
         <log grep="com.sohu.inputmethod.sogou.xiaomi"/>
@@ -119,15 +142,20 @@
         <elog tag="skipped_frames"/>
         <elog tag="am_anr"/>
         <elog tag="am_kill"/>
+        <elog tag="am_activity_launch_time"/>
         <log grep="ANR in" />
         <log grep="Slow Operation" />
         <log grep="Slow Input" />
         <log grep="slow" />
         <log grep="took" />
+        <log grep="Timeout waiting" />
+        <log grep="Took" />
+        <log grep="latency" />
         <log grep="timeout" />
         <log tag="Looper" grep="Dispatch took" />
         <log grep="too much" />
         <log tag="mmid" mute="true"/>
+        <log tag="audio_hw_primary" mute="true"/>
     </rule>
 
     <!--6. 关于 perfevent-->

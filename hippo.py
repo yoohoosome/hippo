@@ -536,7 +536,10 @@ def show_rules():
     print('您可以直接使用以下规则:')
     show_categories()
     from os import path, readlink
-    dirname = path.dirname(readlink(__file__))
+    if path.islink(__file__):
+        dirname = path.dirname(readlink(__file__))
+    else:
+        dirname = path.dirname(__file__)
     file_path = path.join(dirname, 'rules.xml')
     tree = ET.ElementTree(file=file_path)
     for e in tree.iter(tag='rule'):
@@ -573,8 +576,6 @@ def show_summary(file_name: str):
                     print('region       %s' % info_d['region'])
                     print('buildType    %s' % info_d['buildType'])
                     print('buildId      %s' % info_d['buildId'])
-                    print('imeiSha1     %s' % info_d['imeiSha1'])
-                    print('imeiSha2     %s' % info_d['imeiSha2'])
                     print('networkName  %s' % info_d['networkName'])
 
 
@@ -585,6 +586,7 @@ def show_events_hint():
     print('dvm_lock_sample (process|3),(main|1|5),(thread|3),(time|1|3),(file|3),(line|1|5),(ownerfile|3),(ownerline|1|5),(sample_percent|1|6)')
     print('binder_sample (descriptor|3),(method_num|1|5),(time|1|3),(blocking_package|3),(sample_percent|1|6)')
     print('am_lifecycle_sample (User|1|5),(Process Name|3),(MessageCode|1|5),(time|1|3)')
+    print('am_activity_launch_time (User|1|5),(Token|1|5),(Component Name|3),(time|2|3)')
     print('am_mem_factor (Current|1|5),(Previous|1|5)')
 
 def print_version():
@@ -621,7 +623,10 @@ def parse_arguments():
 
 def get_target_rule(name):
     from os import path, readlink
-    dirname = path.dirname(readlink(__file__))
+    if path.islink(__file__):
+        dirname = path.dirname(readlink(__file__))
+    else:
+        dirname = path.dirname(__file__)
     file_path = path.join(dirname, 'rules.xml')
     tree = ET.ElementTree(file=file_path)
     target_element = None
