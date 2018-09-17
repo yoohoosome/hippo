@@ -7,7 +7,7 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 
-VERSION = '0.7.1'
+VERSION = '0.7.2'
 
 
 # Set Color Class
@@ -535,12 +535,7 @@ def show_categories():
 def show_rules():
     print('您可以直接使用以下规则:')
     show_categories()
-    from os import path, readlink
-    if path.islink(__file__):
-        dirname = path.dirname(readlink(__file__))
-    else:
-        dirname = path.dirname(__file__)
-    file_path = path.join(dirname, 'rules.xml')
+    file_path = get_rules_path()
     tree = ET.ElementTree(file=file_path)
     for e in tree.iter(tag='rule'):
         name = e.attrib['name']
@@ -620,14 +615,19 @@ def parse_arguments():
                         help='显示 events log 含义提示')
     return parser.parse_args()
 
-
-def get_target_rule(name):
+def get_rules_path():
     from os import path, readlink
     if path.islink(__file__):
         dirname = path.dirname(readlink(__file__))
+        if dirname.startswith('..'):
+            # 链接使用相对路径
+            dirname = path.join(path.dirname(__file__), dirname)
     else:
         dirname = path.dirname(__file__)
-    file_path = path.join(dirname, 'rules.xml')
+    return path.join(dirname, 'rules.xml')
+
+def get_target_rule(name):
+    file_path = get_rules_path()
     tree = ET.ElementTree(file=file_path)
     target_element = None
     for e in tree.iter(tag='rule'):
