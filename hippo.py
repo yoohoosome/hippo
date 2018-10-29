@@ -224,7 +224,10 @@ def get_logs(minute: int = None) -> (list, list):
             # print(log)
             continue
         log_d = result.groupdict()
-        system_logs.append(LogEntry(log_d))
+        try:
+            system_logs.append(LogEntry(log_d))
+        except:
+            print('log 解释错失败: ' + line)
 
     for line in bugreport_lines[elog_index_start:elog_index_end]:
         result = RE_LOGCAT.search(line)
@@ -351,8 +354,9 @@ def get_uptime() -> list:
 def get_report_time(elogs) -> datetime:
     for log in elogs:
         if log.tag == 'am_proc_start' and 'com.miui.bugreport' in log.message:
-            report_time = log.time
-    return report_time
+            return log.time
+        elif log.tag == 'am_create_activity' and  'com.miui.bugreport' in log.message:
+            return log.time
 
 
 def get_ps() -> list:

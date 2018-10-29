@@ -22,7 +22,7 @@
         <elog tag="screen_toggled"/>
     </rule>
 
-    <rule name="crash" describe="java异常导致crash">
+    <rule name="crash" describe="crash">
         <log tag="AndroidRuntime" priority="E"/>
         <log priority="F"/>
     </rule>
@@ -41,13 +41,18 @@
         <log tag="chatty" mute="true"/>
     </rule>
 
-    <rule name="logs" describe="system log">
+    <rule name="logs" describe="system 和 events 混排">
         <elog/>
         <log/>
         <elog tag="am_pss" mute="true"/>
         <elog tag="auditd" mute="true"/>
         <elog tag="chatty" mute="true"/>
         <log tag="chatty" mute="true"/>
+    </rule>
+
+    <rule name="error" describe="error log">
+        <log priority="E"/>
+        <log tag="System.err"/>
     </rule>
 
     <rule name="perf" describe="perfevents">
@@ -69,6 +74,7 @@
         <log tag="InputReader"/>
         <log tag="InputEventReceiver"/>
         <log grep="Slow Input"/>
+        <log grep="Cancelling event"/>
         <elog grep="key_back_down"/>
     </rule>
 
@@ -113,6 +119,13 @@
         <elog grep="com.tencent.mm"/>
     </rule>
 
+    <rule name="taobao" describe="taobao 进程">
+        <log process="com.taobao.taobao"/>
+        <log grep="com.taobao.taobao"/>
+        <elog process="com.taobao.taobao"/>
+        <elog grep="com.taobao.taobao"/>
+    </rule>
+
     <rule name="photo" describe="相册">
         <log process="com.miui.gallery"/>
         <log grep="com.miui.gallery"/>
@@ -134,7 +147,12 @@
         <elog tag="dvm_lock_sample" process="system_server"/>
     </rule>
 
+    <rule name="dex2oat" describe="dex2oat">
+        <log tag="dex2oat"/>
+    </rule>
+
     <rule name="slow" describe="各种超时">
+        <elog tag="screen_toggled"/>
         <elog tag="dvm_lock_sample"/>
         <elog tag="binder_sample"/>
         <elog tag="am_lifecycle_sample"/>
@@ -143,19 +161,26 @@
         <elog tag="am_anr"/>
         <elog tag="am_kill"/>
         <elog tag="am_activity_launch_time"/>
+        <elog tag="service_manager_stats"/>
+        <elog tag="service_manager_slow"/>
+        <elog tag="am_proc_start"/>
+        <elog tag="cpu"/>
         <log grep="ANR in" />
-        <log grep="Slow Operation" />
-        <log grep="Slow Input" />
+        <log grep="Slow" />
         <log grep="slow" />
         <log grep="took" />
         <log grep="Timeout waiting" />
         <log grep="Took" />
-        <log grep="latency" />
         <log grep="timeout" />
         <log tag="Looper" grep="Dispatch took" />
+        <log tag="SharedPreferencesImpl" grep="Time required to fsync" />
+        <log tag="MiuiPerfServiceClient" grep="interceptAndQueuing" />
         <log grep="too much" />
         <log tag="mmid" mute="true"/>
         <log tag="audio_hw_primary" mute="true"/>
+        <log tag="fpc_tac" mute="true"/>
+        <log tag="CamX" mute="true"/>
+        <log grep="lock verification" mute="true"/>
     </rule>
 
     <!--6. 关于 perfevent-->
