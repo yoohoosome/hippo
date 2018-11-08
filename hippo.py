@@ -135,7 +135,8 @@ class LogEntry:
                 or self.tag == 'sysui_view_visibility':
             words = self.message.lstrip('[').rstrip(']').split(',')
             if len(words) % 2 != 0:
-                raise Exception('sysui_multi_action 解析失败: %s' % self.message)
+                print('sysui_multi_action 解析失败: %s' % self.message)
+                return
             message = '['
             for i in range(0, len(words), 2):
                 k, v = words[i], words[i + 1]
@@ -185,12 +186,14 @@ def read_lines(file_name: str) -> list:
     if zipfile.is_zipfile(file_name):
         with zipfile.ZipFile(file_name) as z:
             file_names = z.namelist()
+            bugreport_file = ""
             for file_name in file_names:
                 if file_name.startswith('bugreport_') \
                         and file_name.endswith('.log'):
                     bugreport_file = file_name
             if not bugreport_file:
-                print('没有找到 bugreport 文件')
+                print('没有找到 bugreport 文件, 请尝试先解压 zip, 然后指定文本文件')
+                exit()
             with z.open(bugreport_file) as f:
                 return [line.decode('utf-8') for line in f.readlines()]
     else:

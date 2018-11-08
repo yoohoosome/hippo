@@ -151,6 +151,10 @@
         <log tag="dex2oat"/>
     </rule>
 
+    <rule name="anr" describe="anr">
+        <elog tag="am_anr"/>
+    </rule>
+
     <rule name="slow" describe="各种超时">
         <elog tag="screen_toggled"/>
         <elog tag="dvm_lock_sample"/>
