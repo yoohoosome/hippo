@@ -185,13 +185,17 @@ def priority2level(level_str: str) -> int:
 def read_lines(file_name: str) -> list:
     if zipfile.is_zipfile(file_name):
         with zipfile.ZipFile(file_name) as z:
-            file_names = z.namelist()
-            bugreport_file = ""
-            for file_name in file_names:
-                if file_name.startswith('bugreport_') \
-                        and file_name.endswith('.log'):
-                    bugreport_file = file_name
-            if not bugreport_file:
+            patterns = (
+                re.compile('bugreport-.*\.txt'),
+                re.compile('bugreport_.*\.log'),
+            )
+            bugreport_file = next(
+                filter(
+                    lambda x: any(pattern.match(x) for pattern in patterns),
+                    z.namelist()
+                ), None,
+            )
+            if bugreport_file is None:
                 print('没有找到 bugreport 文件, 请尝试先解压 zip, 然后指定文本文件')
                 exit()
             with z.open(bugreport_file) as f:
