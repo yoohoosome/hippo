@@ -155,6 +155,32 @@
         <elog tag="am_anr"/>
     </rule>
 
+    <rule name="watchdog" describe="watchdog">
+        <log tag="Watchdog"/>
+    </rule>
+
+    <rule name="fence" describe="fence">
+        <log tag="Fence" grep="signal in" process="surfaceflinger"/>
+    </rule>
+
+    <rule name="thermal" describe="温度">
+        <log tag="ThermalEngine" grep="temp"/>
+    </rule>
+
+    <rule name="severe" describe="严重问题">
+        <log priority="F"/>
+        <log tag="AndroidRuntime" priority="E"/>
+        <log tag="Watchdog"/>
+        <log tag="Choreographer" grep="Skipped"/>
+        <log tag="Fence" grep="signal in" process="surfaceflinger"/>
+        <log tag="MiuiPerfServiceClient" grep="interceptAndQueuing" />
+        <log grep="Slow Frame"/>
+        <log grep="Slow Input"/>
+        <log grep="Slow Operation"/>
+        <elog tag="am_anr"/>
+        <elog tag="dvm_lock_sample" process="system_server"/>
+    </rule>
+
     <rule name="slow" describe="各种超时">
         <elog tag="screen_toggled"/>
         <elog tag="dvm_lock_sample"/>
