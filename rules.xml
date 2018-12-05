@@ -44,10 +44,6 @@
     <rule name="logs" describe="system 和 events 混排">
         <elog/>
         <log/>
-        <elog tag="am_pss" mute="true"/>
-        <elog tag="auditd" mute="true"/>
-        <elog tag="chatty" mute="true"/>
-        <log tag="chatty" mute="true"/>
     </rule>
 
     <rule name="error" describe="error log">

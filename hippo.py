@@ -290,39 +290,53 @@ def filter_log(logs: list,
 
 
 def get_proc_meminfo() -> list:
+    first_index = 0
+    last_index = 0
     for i in range(len(bugreport_lines)):
         if 'MEMORY INFO (/proc/meminfo)' in bugreport_lines[i]:
-            index_start = i
+            first_index = i
         if "was the duration of 'MEMORY INFO'" in bugreport_lines[i]:
-            index_end = i
+            last_index = i
 
-    out_list = bugreport_lines[index_start:index_end]
-    return out_list
+    if first_index and last_index:
+        return bugreport_lines[first_index:last_index]
+    else:
+        return []
 
 
 def get_proc_pagetypeinfo() -> list:
+    first_index = 0
+    last_index = 0
     for i in range(len(bugreport_lines)):
         if 'PAGETYPEINFO (/proc/pagetypeinfo)' in bugreport_lines[i]:
-            index_start = i
+            first_index = i
         if "was the duration of 'PAGETYPEINFO'" in bugreport_lines[i]:
-            index_end = i
+            last_index = i
 
-    out_list = bugreport_lines[index_start:index_end]
-    return out_list
+    if first_index and last_index:
+        return bugreport_lines[first_index:last_index]
+    else:
+        return []
 
 
 def get_total_pss() -> list:
+    first_index = 0
+    last_index = 0
     for i in range(len(bugreport_lines)):
         if 'Total PSS by process' in bugreport_lines[i]:
-            index_start = i
-        if "was the duration of 'DUMPSYS MEMINFO'" in bugreport_lines[i]:
-            index_end = i
+            first_index = i
+        if "was the duration of dumpsys meminfo" in bugreport_lines[i]:
+            last_index = i
 
-    out_list = bugreport_lines[index_start:index_end]
-    return out_list
+    if first_index and last_index:
+        return bugreport_lines[first_index:last_index]
+    else:
+        return []
 
 
 def get_cpu_info() -> list:
+    first_index = 0
+    last_index = 0
     for i in range(len(bugreport_lines)):
         if 'DUMPSYS CPUINFO (/system/bin/dumpsys -t 10 cpuinfo -a)' \
                 in bugreport_lines[i]:
@@ -330,19 +344,24 @@ def get_cpu_info() -> list:
         if "was the duration of 'DUMPSYS CPUINFO'" in bugreport_lines[i]:
             last_index = i
 
-    out_list = bugreport_lines[first_index:last_index]
-    return out_list
+    if first_index and last_index:
+        return bugreport_lines[first_index:last_index]
+    else:
+        return []
 
 
 def get_dmesg() -> list:
+    first_index = 0
+    last_index = 0
     for i in range(len(bugreport_lines)):
-        if '------ KERNEL LOG (dmesg) ------' in bugreport_lines[i]:
+        if '------ KERNEL LOG (' in bugreport_lines[i]:
             first_index = i
-        if "was the duration of 'KERNEL LOG (dmesg)'" in bugreport_lines[i]:
+        if "was the duration of 'KERNEL LOG" in bugreport_lines[i]:
             last_index = i
-
-    out_list = bugreport_lines[first_index:last_index]
-    return out_list
+    if first_index and last_index:
+        return bugreport_lines[first_index:last_index]
+    else:
+        return []
 
 
 def get_uptime() -> list:
@@ -367,25 +386,33 @@ def get_report_time(elogs) -> datetime:
 
 
 def get_ps() -> list:
+    first_index = 0
+    last_index = 0
     for i in range(len(bugreport_lines)):
         if '------ PROCESSES AND THREADS (ps' in bugreport_lines[i]:
-            index_start = i
+            first_index = i
         if "was the duration of 'PROCESSES AND THREADS'" in bugreport_lines[i]:
-            index_end = i
+            last_index = i
 
-    out_list = bugreport_lines[index_start:index_end]
-    return out_list
+    if first_index and last_index:
+        return bugreport_lines[first_index:last_index]
+    else:
+        return []
 
 
 def get_top() -> list:
+    first_index = 0
+    last_index = 0
     for index in range(len(bugreport_lines)):
         if '------ CPU INFO (top' in bugreport_lines[index]:
-            index_start = index
+            first_index = index
         if "was the duration of 'CPU INFO'" in bugreport_lines[index]:
-            index_end = index
+            last_index = index
 
-    out_list = bugreport_lines[index_start:index_end]
-    return out_list
+    if first_index and last_index:
+        return bugreport_lines[first_index:last_index]
+    else:
+        return []
 
 
 top_lines = []
