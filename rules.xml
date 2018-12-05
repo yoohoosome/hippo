@@ -229,4 +229,22 @@
         <perfevent type="JankRecord" duration="100"/>
     </rule>
 
+    <!--7. 关于 黑屏-->
+
+    <rule name="blackscreen" describe="黑屏">
+
+        <!--输入法超时导致黑屏-->
+
+        <log tag="InputConnectionWrapper.ICC" grep="Timed out waiting"/>
+
+        <!--主线程繁忙导致黑屏-->
+
+        <log tag="ActivityManager" grep="Activity stop timeout for"/>
+
+        <!--全面屏手势导致黑屏-->
+
+        <log tag="WindowManager" grep="Performed 6 layouts in a row"/>
+
+    </rule>​
+
 </root>
