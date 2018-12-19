@@ -415,6 +415,15 @@ def get_top() -> list:
         return []
 
 
+def get_defrag() -> list:
+    START = '------ LAST STORAGE COMPACT STATS'
+    END = "was the duration of 'LAST STORAGE COMPACT STATS'"
+    index_start = [idx for idx, line in enumerate(bugreport_lines) if START in line]
+    index_end = [idx for idx, line in enumerate(bugreport_lines) if END in line]
+    if not index_start or not index_end:
+        return []
+    return bugreport_lines[index_start[0] + 1 : index_end[0] - 1]
+
 top_lines = []
 
 
@@ -741,6 +750,20 @@ def main():
 
     if 'top' == args.rule:
         print_lines(get_top())
+        return
+
+    if 'defrag' == args.rule:
+        lines = get_defrag()
+        print_lines(lines)
+        from os.path import isfile
+        if isfile('stat.csv'):
+            ch = input("File stat.csv exists. Override? (y/N)")
+            if ch not in ['y' ,'Y']:
+                return
+
+        with open('stat.csv', 'w') as fp:
+            fp.writelines(lines)
+
         return
 
     system_logs = []
