@@ -173,6 +173,7 @@
         <log grep="Slow Frame"/>
         <log grep="Slow Input"/>
         <log grep="Slow Operation"/>
+        <log grep="Slow operation"/>
         <elog tag="am_anr"/>
         <elog tag="dvm_lock_sample" process="system_server"/>
     </rule>

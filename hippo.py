@@ -199,10 +199,30 @@ def read_lines(file_name: str) -> list:
                 print('没有找到 bugreport 文件, 请尝试先解压 zip, 然后指定文本文件')
                 exit()
             with z.open(bugreport_file) as f:
-                return [line.decode('utf-8') for line in f.readlines()]
+                # return [line.decode('utf-8') for line in f.readlines()]
+                ret = []
+                while 1:
+                    try:
+                        line = f.readline()
+                        if not line:
+                            break
+                        ret.append(line.decode('utf-8'))
+                    except:
+                        pass
+                return ret
     else:
         with open(file_name) as f:
-            return f.readlines()
+            # return f.readlines()
+            ret = []
+            while 1:
+                try:
+                    line = f.readline()
+                    if not line:
+                        break
+                    ret.append(line)
+                except:
+                    pass
+            return ret
 
 
 def get_logs(minute: int = None) -> (list, list):
