@@ -8,7 +8,7 @@ bugreport 的内容非常多, 看起来很痛苦, 因此我们希望有这样一
 
 ## 2 准备
 
-第一步, clone [仓库](http://git.n.xiaomi.com/sangyaohui/hippotool/tree/master) http://git.n.xiaomi.com/sangyaohui/hippotool.git
+第一步, clone http://v9.git.n.xiaomi.com/sangyaohui/hippo
 
 第二步, 为了更方便地使用, 建议您将 hippo.py 改为可执行, 并 **创建链接**, 将链接放在 PATH 路径中, 这里假设是 `/home/mi/bin`
 

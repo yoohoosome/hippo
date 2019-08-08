@@ -163,7 +163,7 @@
         <log tag="ThermalEngine" grep="temp"/>
     </rule>
 
-    <rule name="severe" describe="严重问题">
+    <rule name="s" describe="严重问题">
         <log priority="F"/>
         <log tag="AndroidRuntime" priority="E"/>
         <log tag="Watchdog"/>
@@ -171,43 +171,54 @@
         <log tag="Fence" grep="signal in" process="surfaceflinger"/>
         <log tag="MiuiPerfServiceClient" grep="interceptAndQueuing" />
         <log grep="Slow Frame"/>
+        <log grep="Slow Looper"/>
         <log grep="Slow Input"/>
+        <log grep="App Input"/>
+        <log grep="Slow delivery"/>
+        <log grep="Slow dispatch"/>
+        <log grep="Slow Binder"/>
+        <log grep="InputDispatcher: Window"/>
+        <log grep="Cancelling event"/>
+        <log grep="Dropping event"/>
         <log grep="Slow Operation"/>
         <log grep="Slow operation"/>
+        <log grep="InputDispatcher:"/>
+        <log grep="binder thread pool"/>
+        <log grep="Long monitor contention"/>
+        <log grep="WaitForGcToComplete"/>
+        <log grep="SLOW OOM ADJ"/>
+        <log grep="Davey"/>
         <elog tag="am_anr"/>
-        <elog tag="dvm_lock_sample" process="system_server"/>
-    </rule>
-
-    <rule name="slow" describe="各种超时">
-        <elog tag="screen_toggled"/>
+        <elog tag="am_crash"/>
         <elog tag="dvm_lock_sample"/>
         <elog tag="binder_sample"/>
-        <elog tag="am_lifecycle_sample"/>
-        <elog grep="APP_TRANSITION_DELAY"/>
-        <elog tag="skipped_frames"/>
-        <elog tag="am_anr"/>
-        <elog tag="am_kill"/>
-        <elog tag="am_activity_launch_time"/>
-        <elog tag="service_manager_stats"/>
-        <elog tag="service_manager_slow"/>
-        <elog tag="am_proc_start"/>
-        <elog tag="cpu"/>
-        <log grep="ANR in" />
-        <log grep="Slow" />
-        <log grep="slow" />
-        <log grep="took" />
-        <log grep="Timeout waiting" />
-        <log grep="Took" />
-        <log grep="timeout" />
-        <log tag="Looper" grep="Dispatch took" />
-        <log tag="SharedPreferencesImpl" grep="Time required to fsync" />
+        <elog tag="commit_sys_config_file"/>
+        <elog tag="proc_start"/>
+    </rule>
+
+    <rule name="slow" describe="性能问题">
+        <log priority="F"/>
+        <log tag="AndroidRuntime" priority="E"/>
+        <log tag="Watchdog"/>
+        <log tag="Choreographer" grep="Skipped"/>
+        <log tag="Fence" grep="signal in" process="surfaceflinger"/>
         <log tag="MiuiPerfServiceClient" grep="interceptAndQueuing" />
-        <log grep="too much" />
-        <log tag="mmid" mute="true"/>
-        <log tag="audio_hw_primary" mute="true"/>
-        <log tag="fpc_tac" mute="true"/>
-        <log tag="CamX" mute="true"/>
-        <log grep="lock verification" mute="true"/>
+        <log tag="InputDispatcher"/>
+        <log grep="Slow Frame"/>
+        <log grep="Slow Looper"/>
+        <log grep="Slow Input"/>
+        <log grep="App Input"/>
+        <log grep="Slow Binder"/>
+        <log grep="Slow Operation"/>
+        <log grep="Slow operation"/>
+        <log grep="Long monitor contention"/>
+        <log grep="WaitForGcToComplete"/>
+        <log grep="SLOW OOM ADJ"/>
+        <log grep="Davey"/>
+        <elog tag="am_anr"/>
+        <elog tag="am_crash"/>
+        <elog tag="dvm_lock_sample"/>
+        <elog tag="binder_sample"/>
     </rule>
 
     <!--6. 关于 perfevent-->
