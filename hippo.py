@@ -122,6 +122,7 @@ class LogEntry:
             minute=int(log_d['minute']),
             second=int(log_d['second']),
             microsecond=int(log_d['millisecond']) * 1000)
+        self.uid_str = log_d['uid']
         self.pid = int(log_d['pid'])
         self.tid = int(log_d['tid'])
         self.priority = log_d['priority']
@@ -149,6 +150,9 @@ class LogEntry:
             self.tag = 'skipped_frames'
 
     def __str__(self):
+        uid_str = self.uid_str
+        if len(uid_str) < 5:
+            uid_str = ' ' * (5 - len(uid_str)) + uid_str
         pid_str = str(self.pid)
         if self.pid < 100:
             pid_str = '   ' + pid_str
@@ -165,7 +169,7 @@ class LogEntry:
             tid_str = ' ' + tid_str
         time_str = self.time.strftime('%m-%d %H:%M:%S.%f')[:-3]
 
-        return '%s %s %s %s %s: %s' % (time_str, pid_str, tid_str,
+        return '%s %s %s %s %s %s: %s' % (time_str, uid_str, pid_str, tid_str,
                                        self.priority, self.tag, self.message)
 
 
@@ -226,16 +230,24 @@ def read_lines(file_name: str) -> list:
 
 
 def get_logs(minute: int = None) -> (list, list):
-    for i in range(len(bugreport_lines)):
-        if 'SYSTEM LOG (logcat' in bugreport_lines[i]:
-            syslog_index_start = i + 2
-        if "was the duration of 'SYSTEM LOG'" in bugreport_lines[i]:
+    syslog_index_start = syslog_index_end = elog_index_start = elog_index_end = 0
+    size = len(bugreport_lines)
+    for i in range(size):
+        if not syslog_index_start and bugreport_lines[i].startswith('------ SYSTEM LOG'):
+            syslog_index_start = i
+        elif syslog_index_start and not syslog_index_end and bugreport_lines[i].startswith("------ "):
             syslog_index_end = i
-        if 'EVENT LOG (logcat -b events' in bugreport_lines[i]:
-            elog_index_start = i + 2
-        if "was the duration of 'EVENT LOG'" in bugreport_lines[i]:
+            break
+        
+    for i in range(size):
+        if not elog_index_start and bugreport_lines[i].startswith('------ EVENT LOG'):
+            elog_index_start = i
+        elif elog_index_start and not elog_index_end and bugreport_lines[i].startswith("------ "):
             elog_index_end = i
+            break
 
+    print(syslog_index_start, syslog_index_end, elog_index_start, elog_index_end)
+    
     if not syslog_index_start or not syslog_index_end:
         raise Exception('Syetem Log Lost')
 
@@ -316,6 +328,20 @@ def get_proc_meminfo() -> list:
         if 'MEMORY INFO (/proc/meminfo)' in bugreport_lines[i]:
             first_index = i
         if "was the duration of 'MEMORY INFO'" in bugreport_lines[i]:
+            last_index = i
+
+    if first_index and last_index:
+        return bugreport_lines[first_index:last_index]
+    else:
+        return []
+
+def get_greezer() -> list:
+    first_index = 0
+    last_index = 0
+    for i in range(len(bugreport_lines)):
+        if 'DUMP OF SERVICE greezer' in bugreport_lines[i]:
+            first_index = i
+        if "was the duration of dumpsys greezer" in bugreport_lines[i]:
             last_index = i
 
     if first_index and last_index:
@@ -746,6 +772,10 @@ def main():
 
     if 'meminfo' == args.rule:
         print_lines(get_proc_meminfo())
+        return
+
+    if 'gz' == args.rule:
+        print_lines(get_greezer())
         return
 
     if 'pagetypeinfo' == args.rule:
